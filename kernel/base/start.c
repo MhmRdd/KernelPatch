@@ -13,6 +13,9 @@
 #include <predata.h>
 #include <barrier.h>
 #include <stdarg.h>
+#include <linux/atomic.h>
+#include <asm/cmpxchg.h>
+#include <linux/spinlock.h>
 
 #include "../banner"
 #include "start.h"
@@ -98,6 +101,12 @@ uint64_t kernel_stext_va = 0;
 tlsf_t kp_rw_mem = 0;
 tlsf_t kp_rox_mem = 0;
 
+// TLSF allocator locks for SMP safety
+DEFINE_SPINLOCK(kp_rw_mem_lock);
+DEFINE_SPINLOCK(kp_rox_mem_lock);
+KP_EXPORT_SYMBOL(kp_rw_mem_lock);
+KP_EXPORT_SYMBOL(kp_rox_mem_lock);
+
 #define BOOT_LOG_SIZE 0x2000
 static char boot_log[BOOT_LOG_SIZE] = { 0 };
 static int boot_log_offset = 0;
@@ -174,21 +183,41 @@ uint64_t *pgtable_entry(uint64_t pgd, uint64_t va)
 }
 KP_EXPORT_SYMBOL(pgtable_entry);
 
+// Atomic page table entry modification for SMP safety
+static inline void set_pte_atomic(uint64_t *ptep, uint64_t pte_val)
+{
+    // Use WRITE_ONCE for atomic write visibility across CPUs
+    WRITE_ONCE(*ptep, pte_val);
+    // Data synchronization barrier to ensure write completes
+    dsb(ishst);
+    // Instruction synchronization barrier
+    isb();
+}
+
 void modify_entry_kernel(uint64_t va, uint64_t *entry, uint64_t value)
 {
     if (!pte_valid_cont(*entry) && !pte_valid_cont(value)) {
-        *entry = value;
+        // Simple case: atomic PTE update
+        set_pte_atomic(entry, value);
         flush_tlb_kernel_page(va);
         return;
     }
 
+    // Complex case: contiguous PTEs need special handling
     uint64_t table_pa_mask = (((1ul << (48 - page_shift)) - 1) << page_shift);
     uint64_t prot = value & ~table_pa_mask;
     uint64_t *p = (uint64_t *)((uintptr_t)entry & ~(sizeof(entry) * CONT_PTES - 1));
-    for (int i = 0; i < CONT_PTES; ++i, ++p)
-        *p = (*p & table_pa_mask) | prot;
 
-    *entry = value;
+    // Update all contiguous PTEs atomically
+    for (int i = 0; i < CONT_PTES; ++i, ++p) {
+        uint64_t new_pte = (*p & table_pa_mask) | prot;
+        set_pte_atomic(p, new_pte);
+    }
+
+    // Final entry update
+    set_pte_atomic(entry, value);
+
+    // TLB invalidation with proper range
     va &= CONT_PTE_MASK;
     flush_tlb_kernel_range(va, va + CONT_PTES * page_size);
 }

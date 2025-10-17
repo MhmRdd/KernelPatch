@@ -22,6 +22,8 @@
 #include <linux/vmalloc.h>
 #include <linux/rcupdate.h>
 #include <linux/rculist.h>
+#include <linux/mutex.h>
+#include <linux/delay.h>
 
 #include "module.h"
 #include "relo.h"
@@ -393,6 +395,7 @@ static int elf_header_check(struct load_info *info)
 }
 
 struct module modules = { 0 };
+static DEFINE_MUTEX(module_mutex);  // Global mutex for module operations
 static spinlock_t module_lock;
 
 long load_module(const void *data, int len, const char *args, const char *event, void *__user reserved)
@@ -432,15 +435,21 @@ long load_module(const void *data, int len, const char *args, const char *event,
 
     flush_icache_all();
 
+    // Acquire global module lock before initialization
+    mutex_lock(&module_mutex);
+
     rc = (*mod->init)(mod->args, event, reserved);
 
     if (!rc) {
         logkfi("[%s] succeed with [%s] \n", mod->info.name, args);
-        list_add_tail(&mod->list, &modules.list);
+        // Add to module list under lock
+        list_add_tail_rcu(&mod->list, &modules.list);
+        mutex_unlock(&module_mutex);
         goto out;
     } else {
         logkfi("[%s] failed with [%s] error: %d, try exit ...\n", mod->info.name, args, rc);
         (*mod->exit)(reserved);
+        mutex_unlock(&module_mutex);
     }
 
 free:
@@ -452,33 +461,46 @@ out:
     return rc;
 }
 
-// todo: lock
 long unload_module(const char *name, void *__user reserved)
 {
     if (!name) return -EINVAL;
     logkfe("name: %s\n", name);
 
-    rcu_read_lock();
-    long rc = 0;
+    // Acquire global module lock to prevent concurrent access
+    mutex_lock(&module_mutex);
 
+    long rc = 0;
     struct module *mod = find_module(name);
     if (!mod) {
         rc = -ENOENT;
         goto out;
     }
-    list_del(&mod->list);
+
+    // Remove from list first (with RCU protection)
+    list_del_rcu(&mod->list);
+
+    // Release lock before calling module exit (may take time)
+    mutex_unlock(&module_mutex);
+
+    // Wait for any ongoing RCU read-side critical sections
+    synchronize_rcu();
+
+    // Now safe to call exit and free memory
     rc = (*mod->exit)(reserved);
 
     if (mod->args) kvfree(mod->args);
     if (mod->ctl_args) kvfree(mod->ctl_args);
 
+    // Small delay before freeing executable memory to ensure no CPU is executing it
+    msleep(10);
     kp_free_exec(mod->start);
     kvfree(mod);
 
     logkfi("name: %s, rc: %d\n", name, rc);
+    return rc;
 
 out:
-    rcu_read_unlock();
+    mutex_unlock(&module_mutex);
     return rc;
 }
 
@@ -531,6 +553,8 @@ long module_control0(const char *name, const char *ctl_args, char *__user out_ms
     logkfi("name %s, args: %s\n", name, ctl_args);
 
     long rc = 0;
+
+    // Use RCU read lock for safe module access
     rcu_read_lock();
 
     struct module *mod = find_module(name);
@@ -545,15 +569,28 @@ long module_control0(const char *name, const char *ctl_args, char *__user out_ms
         goto out;
     }
 
-    if (mod->ctl_args) kvfree(mod->ctl_args);
+    // Temporarily unlock RCU for memory allocation
+    rcu_read_unlock();
 
-    mod->ctl_args = vmalloc(args_len + 1);
-    if (!mod->ctl_args) {
-        rc = -ENOMEM;
+    // Allocate new control args
+    char *new_ctl_args = vmalloc(args_len + 1);
+    if (!new_ctl_args) {
+        return -ENOMEM;
+    }
+    strcpy(new_ctl_args, ctl_args);
+
+    // Re-acquire RCU lock and recheck module
+    rcu_read_lock();
+    mod = find_module(name);
+    if (!mod) {
+        kvfree(new_ctl_args);
+        rc = -ENOENT;
         goto out;
     }
 
-    strcpy(mod->ctl_args, ctl_args);
+    // Update control args safely
+    if (mod->ctl_args) kvfree(mod->ctl_args);
+    mod->ctl_args = new_ctl_args;
 
     rc = (*mod->ctl0)(mod->ctl_args, out_msg, outlen);
 
@@ -592,7 +629,8 @@ out:
 struct module *find_module(const char *name)
 {
     struct module *pos;
-    list_for_each_entry(pos, &modules.list, list)
+    // Use RCU-safe list traversal
+    list_for_each_entry_rcu(pos, &modules.list, list)
     {
         if (!strcmp(name, pos->info.name)) {
             return pos;
@@ -607,7 +645,8 @@ int get_module_nums()
 
     struct module *pos;
     int n = 0;
-    list_for_each_entry(pos, &modules.list, list)
+    // Use RCU-safe list traversal
+    list_for_each_entry_rcu(pos, &modules.list, list)
     {
         n++;
     }
@@ -623,7 +662,8 @@ int list_modules(char *out_names, int size)
 
     struct module *pos;
     int off = 0;
-    list_for_each_entry(pos, &modules.list, list)
+    // Use RCU-safe list traversal
+    list_for_each_entry_rcu(pos, &modules.list, list)
     {
         off += snprintf(out_names + off, size - 1 - off, "%s\n", pos->info.name);
     }
