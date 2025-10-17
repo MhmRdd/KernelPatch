@@ -767,7 +767,7 @@ hook_err_t hook_chain_add(hook_chain_t *chain, void *before, void *after, void *
     unsigned long flags;
 
     // Use spinlock for hook chain modifications (atomic context safe)
-    spin_lock_irqsave(&hook_chain_lock, flags);
+    spin_lock_irqsave(&hook_chain_lock, &flags);
 
     for (int i = 0; i < HOOK_CHAIN_NUM; i++) {
         if ((before && chain->befores[i] == before) || (after && chain->afters[i] == after)) {
@@ -806,7 +806,7 @@ void hook_chain_remove(hook_chain_t *chain, void *before, void *after)
     unsigned long flags;
 
     // Use spinlock for hook chain modifications
-    spin_lock_irqsave(&hook_chain_lock, flags);
+    spin_lock_irqsave(&hook_chain_lock, &flags);
 
     for (int i = 0; i < HOOK_CHAIN_NUM; i++) {
         if (chain->states[i] == CHAIN_ITEM_STATE_READY &&

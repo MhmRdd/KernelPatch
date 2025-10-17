@@ -5,15 +5,20 @@
 #include <barrier.h>
 
 /* Compiler barrier and memory access macros */
+#ifndef barrier
 #define barrier() asm volatile("" ::: "memory")
+#endif
 
+#ifndef WRITE_ONCE
 #define WRITE_ONCE(var, val) \
     do { \
         barrier(); \
         (var) = (val); \
         barrier(); \
     } while (0)
+#endif
 
+#ifndef READ_ONCE
 #define READ_ONCE(var) ({ \
     typeof(var) _val; \
     barrier(); \
@@ -21,12 +26,15 @@
     barrier(); \
     _val; \
 })
+#endif
 
 /* Compile-time atomic type assertion - simplified for bare-metal */
+#ifndef compiletime_assert_atomic_type
 #define compiletime_assert_atomic_type(var) \
     do { \
         (void)(var); \
     } while (0)
+#endif
 
 /* Simple bare-metal spinlock implementation using ARM64 exclusive operations */
 

@@ -16,7 +16,7 @@ static inline void *kp_malloc_exec(size_t bytes)
     unsigned long flags;
     void *ptr;
 
-    spin_lock_irqsave(&kp_rox_mem_lock, flags);
+    spin_lock_irqsave(&kp_rox_mem_lock, &flags);
     ptr = tlsf_malloc(kp_rox_mem, bytes);
     spin_unlock_irqrestore(&kp_rox_mem_lock, flags);
 
@@ -28,7 +28,7 @@ static inline void *kp_memalign_exec(size_t align, size_t bytes)
     unsigned long flags;
     void *ptr;
 
-    spin_lock_irqsave(&kp_rox_mem_lock, flags);
+    spin_lock_irqsave(&kp_rox_mem_lock, &flags);
     ptr = tlsf_memalign(kp_rox_mem, align, bytes);
     spin_unlock_irqrestore(&kp_rox_mem_lock, flags);
 
@@ -40,7 +40,7 @@ static inline void *kp_realloc_exec(void *ptr, size_t size)
     unsigned long flags;
     void *new_ptr;
 
-    spin_lock_irqsave(&kp_rox_mem_lock, flags);
+    spin_lock_irqsave(&kp_rox_mem_lock, &flags);
     new_ptr = tlsf_realloc(kp_rox_mem, ptr, size);
     spin_unlock_irqrestore(&kp_rox_mem_lock, flags);
 
@@ -53,7 +53,7 @@ static inline void kp_free_exec(void *ptr)
 
     if (!ptr) return;
 
-    spin_lock_irqsave(&kp_rox_mem_lock, flags);
+    spin_lock_irqsave(&kp_rox_mem_lock, &flags);
     tlsf_free(kp_rox_mem, ptr);
     spin_unlock_irqrestore(&kp_rox_mem_lock, flags);
 }
@@ -63,7 +63,7 @@ static inline void *kp_malloc(size_t bytes)
     unsigned long flags;
     void *ptr;
 
-    spin_lock_irqsave(&kp_rw_mem_lock, flags);
+    spin_lock_irqsave(&kp_rw_mem_lock, &flags);
     ptr = tlsf_malloc(kp_rw_mem, bytes);
     spin_unlock_irqrestore(&kp_rw_mem_lock, flags);
 
@@ -75,7 +75,7 @@ static inline void *kp_memalign(size_t align, size_t bytes)
     unsigned long flags;
     void *ptr;
 
-    spin_lock_irqsave(&kp_rw_mem_lock, flags);
+    spin_lock_irqsave(&kp_rw_mem_lock, &flags);
     ptr = tlsf_memalign(kp_rw_mem, align, bytes);
     spin_unlock_irqrestore(&kp_rw_mem_lock, flags);
 
@@ -87,7 +87,7 @@ static inline void *kp_realloc(void *ptr, size_t size)
     unsigned long flags;
     void *new_ptr;
 
-    spin_lock_irqsave(&kp_rw_mem_lock, flags);
+    spin_lock_irqsave(&kp_rw_mem_lock, &flags);
     new_ptr = tlsf_realloc(kp_rw_mem, ptr, size);
     spin_unlock_irqrestore(&kp_rw_mem_lock, flags);
 
@@ -100,7 +100,7 @@ static inline void kp_free(void *ptr)
 
     if (!ptr) return;
 
-    spin_lock_irqsave(&kp_rw_mem_lock, flags);
+    spin_lock_irqsave(&kp_rw_mem_lock, &flags);
     tlsf_free(kp_rw_mem, ptr);
     spin_unlock_irqrestore(&kp_rw_mem_lock, flags);
 }

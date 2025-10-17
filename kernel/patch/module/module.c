@@ -17,12 +17,11 @@
 #include <hotpatch.h>
 #include <linux/list.h>
 #include <linux/kernel.h>
-#include <linux/spinlock.h>
 #include <linux/slab.h>
 #include <linux/vmalloc.h>
 #include <linux/rcupdate.h>
 #include <linux/rculist.h>
-#include <linux/mutex.h>
+#include <kp_spinlock.h>
 #include <linux/delay.h>
 
 #include "module.h"
@@ -396,7 +395,6 @@ static int elf_header_check(struct load_info *info)
 
 struct module modules = { 0 };
 static DEFINE_MUTEX(module_mutex);  // Global mutex for module operations
-static spinlock_t module_lock;
 
 long load_module(const void *data, int len, const char *args, const char *event, void *__user reserved)
 {
@@ -701,5 +699,4 @@ int get_module_info(const char *name, char *out_info, int size)
 void module_init()
 {
     INIT_LIST_HEAD(&modules.list);
-    spin_lock_init(&module_lock);
 }
