@@ -6,8 +6,7 @@
 #include "hook.h"
 
 #include <stdint.h>
-#include <linux/atomic.h>
-#include <asm/cmpxchg.h>
+#include <atomic.h>
 
 static uint64_t mem_region_start = 0;
 static uint64_t mem_region_end = 0;

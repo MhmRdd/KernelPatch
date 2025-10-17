@@ -2,7 +2,7 @@
 #define _KP_KPMALLOC_H_
 
 #include <tlsf.h>
-#include <linux/spinlock.h>
+#include <spinlock.h>
 
 extern tlsf_t kp_rw_mem;
 extern tlsf_t kp_rox_mem;

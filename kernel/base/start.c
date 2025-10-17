@@ -13,9 +13,9 @@
 #include <predata.h>
 #include <barrier.h>
 #include <stdarg.h>
-#include <linux/atomic.h>
-#include <asm/cmpxchg.h>
-#include <linux/spinlock.h>
+#include <stdint.h>
+#include <atomic.h>
+#include <spinlock.h>
 
 #include "../banner"
 #include "start.h"
