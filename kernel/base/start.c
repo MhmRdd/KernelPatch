@@ -14,8 +14,8 @@
 #include <barrier.h>
 #include <stdarg.h>
 #include <stdint.h>
-#include "../include/atomic.h"
-#include "../include/spinlock.h"
+#include <atomic.h>
+#include <spinlock.h>
 
 #include "../banner"
 #include "start.h"

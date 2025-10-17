@@ -9,8 +9,8 @@
 #include <kpmalloc.h>
 #include <io.h>
 #include <symbol.h>
-#include "../include/atomic.h"
-#include "../include/spinlock.h"
+#include <atomic.h>
+#include <spinlock.h>
 #include "hmem.h"
 
 #define bits32(n, high, low) ((uint32_t)((n) << (31u - (high))) >> (31u - (high) + (low)))
