@@ -7,3 +7,6 @@ build
 
 test
 script
+
+# Local CMake configuration (user-specific)
+cmake/LocalConfig.cmake
