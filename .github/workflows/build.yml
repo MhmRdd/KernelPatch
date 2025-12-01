@@ -245,13 +245,13 @@ jobs:
       - uses: msys2/setup-msys2@v2
         with:
           update: true
-          msystem: ucrt64
+          msystem: msys
           path-type: inherit
           install: >-
-            msys/make
-            msys/gcc
-            msys/cmake
-            msys/zlib-devel
+            make
+            gcc
+            cmake
+            zlib-devel
       - name: Make hdr
         shell: msys2 {0}
         run: |
