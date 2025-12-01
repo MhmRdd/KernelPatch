@@ -247,14 +247,16 @@ jobs:
             msys/cmake
             msys/zlib-devel
       - name: Make hdr
-        shell: cmd
+        shell: msys2 {0}
         run: |
-          msys2 -c 'cd kernel && TARGET_COMPILE=placeholder make hdr'
+          cd kernel && TARGET_COMPILE=placeholder make hdr
       - name: Build kptools
-        shell: cmd
+        shell: msys2 {0}
         run: |
           cd tools
-          msys2 -c 'mkdir -p build && cd build && cmake -DCMAKE_BUILD_TYPE=Release .. && make'
+          mkdir -p build && cd build
+          cmake -DCMAKE_BUILD_TYPE=Release ..
+          make
       - name: Package
         shell: pwsh
         run: |
