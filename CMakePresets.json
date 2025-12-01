@@ -1,0 +1,170 @@
+{
+    "version": 6,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 20,
+        "patch": 0
+    },
+    "configurePresets": [
+        {
+            "name": "default",
+            "displayName": "Default (All Components)",
+            "description": "Build all KernelPatch components with auto-detected cross-compiler",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "KP_BUILD_KPTOOLS": "ON",
+                "KP_BUILD_KPIMG": "ON",
+                "KP_BUILD_KPMS": "ON",
+                "KP_ANDROID": "OFF",
+                "KP_DEBUG": "OFF"
+            }
+        },
+        {
+            "name": "debug",
+            "displayName": "Debug Build",
+            "description": "Build with debug symbols and diagnostics",
+            "inherits": "default",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "KP_DEBUG": "ON",
+                "KP_MAP_DEBUG": "ON"
+            }
+        },
+        {
+            "name": "android",
+            "displayName": "Android Build",
+            "description": "Build with Android-specific features enabled",
+            "inherits": "default",
+            "cacheVariables": {
+                "KP_ANDROID": "ON"
+            }
+        },
+        {
+            "name": "android-debug",
+            "displayName": "Android Debug Build",
+            "description": "Android build with debug features",
+            "inherits": "android",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "KP_DEBUG": "ON"
+            }
+        },
+        {
+            "name": "kptools-only",
+            "displayName": "kptools Only",
+            "description": "Build only the host patching utility",
+            "inherits": "default",
+            "cacheVariables": {
+                "KP_BUILD_KPIMG": "OFF",
+                "KP_BUILD_KPMS": "OFF"
+            }
+        },
+        {
+            "name": "cross-compile",
+            "displayName": "Cross-Compile Only",
+            "description": "Build only cross-compiled components (kpimg, KPMs)",
+            "inherits": "default",
+            "cacheVariables": {
+                "KP_BUILD_KPTOOLS": "OFF"
+            }
+        },
+        {
+            "name": "linux-gcc",
+            "displayName": "Linux (GCC)",
+            "description": "Linux build with GCC",
+            "inherits": "default",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Linux"
+            }
+        },
+        {
+            "name": "macos-clang",
+            "displayName": "macOS (Clang)",
+            "description": "macOS build with Clang",
+            "inherits": "default",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Darwin"
+            }
+        },
+        {
+            "name": "windows-msvc",
+            "displayName": "Windows (MSVC)",
+            "description": "Windows build with MSVC",
+            "inherits": "default",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            },
+            "generator": "Ninja"
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "default-build",
+            "displayName": "Build All",
+            "configurePreset": "default",
+            "targets": ["build_all"]
+        },
+        {
+            "name": "kptools-build",
+            "displayName": "[kptools] Build",
+            "configurePreset": "default",
+            "targets": ["kptools"]
+        },
+        {
+            "name": "kpimg-build",
+            "displayName": "[kpimg] Build",
+            "configurePreset": "default",
+            "targets": ["kpimg_build"]
+        },
+        {
+            "name": "kpms-build",
+            "displayName": "[kpms] Build All",
+            "configurePreset": "default",
+            "targets": ["kpms_all"]
+        },
+        {
+            "name": "kpm-hello-build",
+            "displayName": "[kpms] Build Hello",
+            "configurePreset": "default",
+            "targets": ["kpm_demo-hello"]
+        },
+        {
+            "name": "kpm-inlinehook-build",
+            "displayName": "[kpms] Build InlineHook",
+            "configurePreset": "default",
+            "targets": ["kpm_demo-inlinehook"]
+        },
+        {
+            "name": "kpm-syscallhook-build",
+            "displayName": "[kpms] Build SyscallHook",
+            "configurePreset": "default",
+            "targets": ["kpm_demo-syscallhook"]
+        },
+        {
+            "name": "clean-all",
+            "displayName": "Clean All",
+            "configurePreset": "default",
+            "targets": ["clean_all"]
+        },
+        {
+            "name": "debug-build",
+            "displayName": "Debug Build All",
+            "configurePreset": "debug",
+            "targets": ["build_all"]
+        },
+        {
+            "name": "android-build",
+            "displayName": "Android Build All",
+            "configurePreset": "android",
+            "targets": ["build_all"]
+        }
+    ]
+}

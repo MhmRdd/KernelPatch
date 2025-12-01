@@ -124,9 +124,7 @@ public:
     const KernelVersion &version() const { return version_; }
     bool is_big_endian() const { return is_be_; }
     bool has_relative_base() const { return has_relative_base_; }
-    bool is_absolute_percpu() const { return is_absolute_percpu_; }
     uint64_t kernel_base() const { return kernel_base_; }
-    uint64_t relative_base() const { return relative_base_; }
     int32_t num_syms() const { return num_syms_; }
     CurrentType current_type() const { return current_type_; }
     bool is_kallsyms_all() const { return is_kallsyms_all_; }
@@ -179,7 +177,6 @@ private:
     KernelVersion version_{};
     bool is_be_ = false;
     bool has_relative_base_ = false;
-    bool is_absolute_percpu_ = false;  // CONFIG_KALLSYMS_ABSOLUTE_PERCPU
     bool is_kallsyms_all_ = true;
     bool relo_applied_ = false;
     CurrentType current_type_ = CurrentType::SpEl0;

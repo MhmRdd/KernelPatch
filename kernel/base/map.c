@@ -186,14 +186,26 @@ void __noinline _paging_init()
 #define map_debug(idx, val)
 #endif
 
+    memblock_reserve_f memblock_reserve = (memblock_reserve_f)data->map_symbol.memblock_reserve_relo;
+
     uint64_t page_size = 1 << data->page_shift;
     uint64_t old_start_pa = data->start_offset + data->kernel_pa;
     uint64_t reserve_size = data->start_img_size + data->extra_size;
     uint64_t align_extra_size = (data->extra_size + page_size - 1) & ~(page_size - 1);
     uint64_t all_size = data->start_size + align_extra_size + data->alloc_size;
 
+    /*
+     * Reserve the kernel image region to prevent page table allocations
+     * from landing in physical addresses that Samsung Exynos S2MPU marks
+     * as "kernel RO" via HVC_FID_BAN_KERNEL_RO_REGION. This avoids HSI
+     * S2MPU faults when writing to newly allocated page table pages.
+     * This is cross-kernel compatible (memblock_reserve exists since 2.6).
+     */
+    uint64_t kernel_region_size = data->start_offset;
+    memblock_reserve(data->kernel_pa, kernel_region_size);
+
     // reserve old start
-    ((memblock_reserve_f)data->map_symbol.memblock_reserve_relo)(old_start_pa, reserve_size);
+    memblock_reserve(old_start_pa, reserve_size);
     // alloc
     uint64_t start_pa =
         ((memblock_phys_alloc_try_nid_f)data->map_symbol.memblock_phys_alloc_relo)(all_size, page_size, 0);

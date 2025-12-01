@@ -1,12 +1,37 @@
-.vscode/*
+# IDE and editor files
+.vscode/
 .history/
+.idea/
+*.swp
+*.swo
+*~
 
+# macOS
 **/.DS_Store
 
-build
+# Build directories
+build/
+build-*/
+cmake-build-*/
+out/
 
-test
-script
+# Test and script directories (local development)
+test/
+script/
 
-# Local CMake configuration (user-specific)
+# Local CMake configuration (user-specific paths)
 cmake/LocalConfig.cmake
+CMakeUserPresets.json
+
+# Compiled objects and binaries (not in build dirs)
+*.o
+*.ko
+*.kpm
+kpimg
+kpimg.elf
+kptools
+ktool
+
+# Logs and temporary files
+*.log
+*.tmp
