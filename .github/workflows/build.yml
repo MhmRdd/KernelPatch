@@ -245,13 +245,13 @@ jobs:
       - uses: msys2/setup-msys2@v2
         with:
           update: true
-          msystem: msys
+          msystem: ucrt64
           path-type: inherit
           install: >-
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-zlib
             make
-            gcc
-            cmake
-            zlib-devel
       - name: Make hdr
         shell: msys2 {0}
         run: |
@@ -261,23 +261,21 @@ jobs:
         run: |
           cd tools
           mkdir -p build && cd build
-          cmake -DCMAKE_BUILD_TYPE=Release ..
+          cmake -G "MSYS Makefiles" -DCMAKE_BUILD_TYPE=Release ..
           make
       - name: Package
         shell: pwsh
         run: |
           mkdir .\win
-          cp .\tools\build\bin\kptools.exe .\win\kptools-msys2.exe
-          cp D:\a\_temp\msys64\usr\bin\msys-2.0.dll .\win
-          cp D:\a\_temp\msys64\usr\bin\msys-z.dll .\win
-          7z a kptools-msys2-win .\win
+          cp .\tools\build\bin\kptools.exe .\win\kptools-win.exe
+          7z a kptools-win .\win
       - name: Release
         uses: ncipollo/release-action@v1.14.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ env.VERSION }}
           artifacts: |
-            kptools-msys2-win.7z
+            kptools-win.7z
           allowUpdates: true
           replacesArtifacts: true
 
