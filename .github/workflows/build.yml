@@ -249,7 +249,7 @@ jobs:
       - name: Make hdr
         shell: cmd
         run: |
-          msys2 -c 'export TARGET_COMPILE=placeholder && cd kernel && make hdr'
+          msys2 -c 'cd kernel && TARGET_COMPILE=placeholder make hdr'
       - name: Build kptools
         shell: cmd
         run: |
