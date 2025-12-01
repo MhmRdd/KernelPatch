@@ -2,7 +2,7 @@
 
 ## Build kpimg
 
-Require a bare-metal cross compiler  
+Require a bare-metal cross compiler
 [Download here](https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads)
 
 ```shell
@@ -14,68 +14,64 @@ make
 
 ## Build kptools
 
-kptools can run anywhere, just compile it.  
-
-- Using Makefile
-
-```shell
-export ANDROID=1
-cd tools
-make
-```
-
-- Using CMake
+kptools is written in C++20 and uses CMake for building.
 
 ```shell
 cd tools
-mkdir build
-cd build
-cmake ..
+mkdir -p build && cd build
+cmake -DCMAKE_BUILD_TYPE=Release ..
 make
 ```
 
-## Building kpatch
-
-kpatch runs in the user space of the target system, so you can build it as usual.  
-If you are using it for Android, you can use AndroidKernelPatch.
-
-- Using Makefile
-
-```shell
-cd user
-make
-```
-
-- Using CMake
-
-```shell
-cd user
-mkdir build
-cd build
-cmake ..
-make
-```
-
-- Compile for Android
+### Cross-compile for Android
 
 ```shell
 export ANDROID_NDK=/path/to/ndk
-export ANDROID=1
-cd user
+cd tools
 mkdir -p build/android && cd build/android
-cmake -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK/build/cmake/android.toolchain.cmake \
+cmake \
+    -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK/build/cmake/android.toolchain.cmake \
     -DCMAKE_BUILD_TYPE=Release \
     -DANDROID_PLATFORM=android-33 \
-    -DANDROID_ABI=arm64-v8a ../..
+    -DANDROID_ABI=arm64-v8a \
+    ../..
+cmake --build .
+```
+
+## Build ktool
+
+ktool is a standalone kernel analysis tool written in C++17.
+
+```shell
+cd ktool
+mkdir -p build && cd build
+cmake -DCMAKE_BUILD_TYPE=Release ..
+make
+# Output: bin/ktool
+```
+
+### Cross-compile for Android
+
+```shell
+export ANDROID_NDK=/path/to/ndk
+cd ktool
+mkdir -p build/android && cd build/android
+cmake \
+    -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK/build/cmake/android.toolchain.cmake \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DANDROID_PLATFORM=android-26 \
+    -DANDROID_ABI=arm64-v8a \
+    -DKTOOL_ANDROID=ON \
+    ../..
 cmake --build .
 ```
 
 ## Build KernelPatch Module
 
-example:
+Example:
 
 ```shell
 export TARGET_COMPILE=aarch64-none-elf-
-cd kpm-demo/hello
+cd kpms/demo-hello
 make
 ```

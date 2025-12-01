@@ -3,9 +3,9 @@
 **Patching and hooking the Linux kernel with only stripped Linux kernel image.**
 
 ``` shell
- _  __                    _ ____       _       _     
-| |/ /___ _ __ _ __   ___| |  _ \ __ _| |_ ___| |__  
-| ' // _ \ '__| '_ \ / _ \ | |_) / _` | __/ __| '_ \ 
+ _  __                    _ ____       _       _
+| |/ /___ _ __ _ __   ___| |  _ \ __ _| |_ ___| |__
+| ' // _ \ '__| '_ \ / _ \ | |_) / _` | __/ __| '_ \
 | . \  __/ |  | | | |  __/ |  __/ (_| | || (__| | | |
 |_|\_\___|_|  |_| |_|\___|_|_|   \__,_|\__\___|_| |_|
 
@@ -20,15 +20,23 @@ If you are using Android, [APatch](https://github.com/bmax121/APatch) would be a
 
 ## Requirement
 
-CONFIG_KALLSYMS=y  
+CONFIG_KALLSYMS=y
 
 ## Supported Versions
 
-Currently only supports arm64 architecture.  
+Currently only supports arm64 architecture.
 
-Linux 3.18 - 6.6 (theoretically)  
+Linux 3.18 - 6.12 (theoretically)
 
-## Get Involved
+## Components
+
+| Component | Description | Language |
+|-----------|-------------|----------|
+| [kpimg](./kernel/) | Kernel-level patching component | C |
+| [kptools](./tools/) | Kernel image patching utility | C++20 |
+| [ktool](./ktool/) | Kernel image analysis tool | C++17 |
+| [kpuser](./user/) | User-space SuperCall library | C |
+| [kpms](./kpms/) | KernelPatch Module examples | C |
 
 ## More Information
 
