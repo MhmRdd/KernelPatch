@@ -12,11 +12,11 @@
 #include <cstdio>
 #include <sstream>
 
-#ifdef KTOOL_HAVE_ZLIB
+#ifdef KPTOOLS_HAVE_ZLIB
 #include <zlib.h>
 #endif
 
-namespace ktool {
+namespace kptools {
 
 namespace {
 
@@ -137,7 +137,7 @@ std::optional<std::pair<size_t, size_t>> IkconfigFinder::find(const uint8_t* dat
 }
 
 std::string IkconfigFinder::decompress_gzip(const uint8_t* data, size_t size) {
-#ifdef KTOOL_HAVE_ZLIB
+#ifdef KPTOOLS_HAVE_ZLIB
     // Initialize zlib for gzip decompression
     z_stream strm{};
     strm.zalloc = Z_NULL;
@@ -199,4 +199,4 @@ std::string IkconfigFinder::extract(const uint8_t* data, size_t size) {
     return decompress_gzip(gzip_data_.data(), gzip_data_.size());
 }
 
-} // namespace ktool
+} // namespace kptools

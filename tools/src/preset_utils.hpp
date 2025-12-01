@@ -14,7 +14,7 @@ extern "C" {
 #include <cstring>
 #include <string>
 
-namespace ktool {
+namespace kptools {
 
 using SetupHeader = setup_header_t;
 using SetupPreset = setup_preset_t;
@@ -83,4 +83,4 @@ constexpr T align_down(T val, T align) { return val & ~(align - 1); }
 template<typename T>
 constexpr bool is_aligned(T val, T align) { return (val & (align - 1)) == 0; }
 
-} // namespace ktool
+} // namespace kptools

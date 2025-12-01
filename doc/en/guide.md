@@ -4,18 +4,13 @@
 
 KernelPatch consists of the following components:
 
-### [kptools](/tools/) (C++20)
+### [kptools](/tools/) (C++17)
 
-kptools is the main patching utility:
+kptools is the main patching and analysis utility:
 
 - Parses kernel images without source code or symbol information and retrieves offset addresses of arbitrary kernel symbols.
 - Patches the kernel image by appending kpimg to the end and writing necessary information to predetermined locations.
 - Replaces the kernel's startup location with the starting address of kpimg.
-
-### [ktool](/ktool/) (C++17)
-
-ktool is a standalone kernel analysis tool:
-
 - Extracts and dumps kallsyms symbol tables from kernel images.
 - Extracts embedded kernel configuration (ikconfig).
 - Displays kernel image metadata and structure.

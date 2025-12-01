@@ -11,8 +11,8 @@
  * See kernel/configs.c for details.
  */
 
-#ifndef KTOOL_IKCONFIG_HPP
-#define KTOOL_IKCONFIG_HPP
+#ifndef KPTOOLS_IKCONFIG_HPP
+#define KPTOOLS_IKCONFIG_HPP
 
 #include <cstdint>
 #include <string>
@@ -21,7 +21,7 @@
 #include <optional>
 #include <unordered_map>
 
-namespace ktool {
+namespace kptools {
 
 // Exception for config not found
 class IkconfigNotFound : public std::runtime_error {
@@ -103,6 +103,6 @@ private:
     size_t end_offset_ = 0;
 };
 
-} // namespace ktool
+} // namespace kptools
 
-#endif // KTOOL_IKCONFIG_HPP
+#endif // KPTOOLS_IKCONFIG_HPP

@@ -36,7 +36,6 @@ include(FindHostCompiler)
 # ============================================================================
 
 option(KP_BUILD_KPTOOLS "Build kptools (host patching utility)" ON)
-option(KP_BUILD_KTOOL "Build ktool (modern C++ patching utility)" ON)
 option(KP_BUILD_KPIMG "Build kpimg (kernel-level component)" ON)
 option(KP_BUILD_KPMS "Build KPM demo modules" ON)
 option(KP_ANDROID "Enable Android-specific features" OFF)
@@ -175,22 +174,16 @@ file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/kpms)
 # Subdirectories
 # ============================================================================
 
-# kptools - Host tool (built with system compiler)
+# kptools - Host tool (built with system compiler, C++17)
 if(KP_BUILD_KPTOOLS)
     message(STATUS "Configuring kptools...")
-    add_subdirectory(tools)
-endif()
-
-# ktool - Modern C++ host tool
-if(KP_BUILD_KTOOL)
-    message(STATUS "Configuring ktool...")
-    # Enable CXX language for ktool
+    # Enable CXX language for kptools
     enable_language(CXX)
-    # Pass Android flag to ktool
+    # Pass Android flag to kptools
     if(KP_ANDROID)
-        set(KTOOL_ANDROID ON CACHE BOOL "Build ktool for Android" FORCE)
+        set(KPTOOLS_ANDROID ON CACHE BOOL "Build kptools for Android" FORCE)
     endif()
-    add_subdirectory(ktool)
+    add_subdirectory(tools)
 endif()
 
 # kpimg - Kernel component (requires cross-compiler)
@@ -264,10 +257,6 @@ if(TARGET kptools)
     add_dependencies(build_all kptools)
 endif()
 
-if(TARGET ktool)
-    add_dependencies(build_all ktool)
-endif()
-
 if(TARGET kpimg_Build)
     add_dependencies(build_all kpimg_Build)
 endif()
@@ -305,7 +294,6 @@ install(DIRECTORY ${CMAKE_BINARY_DIR}/bin/
 message(STATUS "")
 message(STATUS "=== Build Configuration Summary ===")
 message(STATUS "  Build kptools:        ${KP_BUILD_KPTOOLS}")
-message(STATUS "  Build ktool:          ${KP_BUILD_KTOOL}")
 message(STATUS "  Build kpimg:          ${KP_BUILD_KPIMG}")
 message(STATUS "  Build KPMs:           ${KP_BUILD_KPMS}")
 message(STATUS "  Android support:      ${KP_ANDROID}")
@@ -316,17 +304,10 @@ if(KP_HAVE_CROSS_COMPILER)
 endif()
 message(STATUS "")
 message(STATUS "Build targets:")
-if(KPTOOLS_USE_CXX)
-    message(STATUS "  kptools_cpp           - Build C++ host patching utility")
-    message(STATUS "  kptools_cpp_Build     - Build C++ host patching utility")
-    message(STATUS "  kptools_cpp_Push      - Push kptools to device")
-    message(STATUS "  kptools_cpp_BuildAndPush - Build and push kptools")
-else()
-    message(STATUS "  kptools               - Build C host patching utility")
-    message(STATUS "  kptools_Build         - Build C host patching utility")
-    message(STATUS "  kptools_Push          - Push kptools to device")
-    message(STATUS "  kptools_BuildAndPush  - Build and push kptools")
-endif()
+message(STATUS "  kptools               - Build C++17 host patching utility")
+message(STATUS "  kptools_Build         - Build kptools")
+message(STATUS "  kptools_Push          - Push kptools to device")
+message(STATUS "  kptools_BuildAndPush  - Build and push kptools")
 if(KP_HAVE_CROSS_COMPILER)
     message(STATUS "  kpimg_Build           - Build kernel component")
     message(STATUS "  kpimg_Push            - Push kpimg to device")

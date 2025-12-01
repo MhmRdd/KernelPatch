@@ -12,7 +12,7 @@
 #include <functional>
 #include <stdexcept>
 
-namespace ktool {
+namespace kptools {
 
 enum class SymbolType : char {
     Absolute = 'A',
@@ -169,4 +169,4 @@ private:
     uint64_t forced_base_address_ = 0;
 };
 
-} // namespace ktool
+} // namespace kptools

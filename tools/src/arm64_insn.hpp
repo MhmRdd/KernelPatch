@@ -6,7 +6,7 @@
 #include <cstdint>
 #include <stdexcept>
 
-namespace ktool {
+namespace kptools {
 namespace arm64 {
 
 constexpr int64_t kBranchRange = 128 * 1024 * 1024;  // ±128 MB
@@ -130,4 +130,4 @@ inline size_t skip_pac(const uint8_t* data, size_t size, size_t off) {
 }
 
 } // namespace arm64
-} // namespace ktool
+} // namespace kptools

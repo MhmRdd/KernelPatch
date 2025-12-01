@@ -11,7 +11,7 @@
 #include <cstring>
 #include <fstream>
 
-namespace ktool {
+namespace kptools {
 
 constexpr size_t kPageSize = 4096;
 constexpr const char* kUncompressedMagic = "UNCOMPRESSED_IMG";
@@ -501,4 +501,4 @@ void Patcher::kpimg_info(const fs::path& path) {
                 header_debug(p->header) ? "debug" : "release");
 }
 
-} // namespace ktool
+} // namespace kptools

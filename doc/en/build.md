@@ -14,13 +14,14 @@ make
 
 ## Build kptools
 
-kptools is written in C++20 and uses CMake for building.
+kptools is written in C++17 and uses CMake for building.
 
 ```shell
 cd tools
 mkdir -p build && cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..
 make
+# Output: bin/kptools
 ```
 
 ### Cross-compile for Android
@@ -28,40 +29,13 @@ make
 ```shell
 export ANDROID_NDK=/path/to/ndk
 cd tools
-mkdir -p build/android && cd build/android
-cmake \
-    -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK/build/cmake/android.toolchain.cmake \
-    -DCMAKE_BUILD_TYPE=Release \
-    -DANDROID_PLATFORM=android-33 \
-    -DANDROID_ABI=arm64-v8a \
-    ../..
-cmake --build .
-```
-
-## Build ktool
-
-ktool is a standalone kernel analysis tool written in C++17.
-
-```shell
-cd ktool
-mkdir -p build && cd build
-cmake -DCMAKE_BUILD_TYPE=Release ..
-make
-# Output: bin/ktool
-```
-
-### Cross-compile for Android
-
-```shell
-export ANDROID_NDK=/path/to/ndk
-cd ktool
 mkdir -p build/android && cd build/android
 cmake \
     -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK/build/cmake/android.toolchain.cmake \
     -DCMAKE_BUILD_TYPE=Release \
     -DANDROID_PLATFORM=android-26 \
     -DANDROID_ABI=arm64-v8a \
-    -DKTOOL_ANDROID=ON \
+    -DKPTOOLS_ANDROID=ON \
     ../..
 cmake --build .
 ```

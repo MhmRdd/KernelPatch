@@ -18,11 +18,11 @@
 
 namespace fs = std::filesystem;
 
-namespace ktool {
+namespace kptools {
 
-constexpr int kVersionMajor = KTOOL_VERSION_MAJOR;
-constexpr int kVersionMinor = KTOOL_VERSION_MINOR;
-constexpr int kVersionPatch = KTOOL_VERSION_PATCH;
+constexpr int kVersionMajor = KPTOOLS_VERSION_MAJOR;
+constexpr int kVersionMinor = KPTOOLS_VERSION_MINOR;
+constexpr int kVersionPatch = KPTOOLS_VERSION_PATCH;
 
 std::string version_str() {
     return std::to_string(kVersionMajor) + "." + std::to_string(kVersionMinor) + "." + std::to_string(kVersionPatch);
@@ -44,7 +44,7 @@ struct Args {
 
 void usage(const char* prog) {
     std::fprintf(stderr,
-        "ktool - KernelPatch Tool v%s\n\n"
+        "kptools - KernelPatch Tool v%s\n\n"
         "Usage: %s <command> [options]\n\n"
         "Commands:\n"
         "  patch      Patch kernel image\n"
@@ -287,7 +287,7 @@ int cmd_dump(const Args& a) {
 
     try {
         auto data = read_file(a.kernel);
-        std::fprintf(stderr, "[ktool] Read %zu bytes\n", data.size());
+        std::fprintf(stderr, "[kptools] Read %zu bytes\n", data.size());
 
         KallsymsFinder finder;
         finder.parse(data.data(), data.size());
@@ -319,7 +319,7 @@ int cmd_config(const Args& a) {
 
     try {
         auto data = read_file(a.kernel);
-        std::fprintf(stderr, "[ktool] Read %zu bytes\n", data.size());
+        std::fprintf(stderr, "[kptools] Read %zu bytes\n", data.size());
 
         IkconfigFinder finder;
         auto config_text = finder.extract(data.data(), data.size());
@@ -355,7 +355,7 @@ int cmd_image(const Args& a) {
 
     try {
         auto data = read_file(a.kernel);
-        std::printf("[ktool] Analyzing: %s (%zu bytes)\n", a.kernel.c_str(), data.size());
+        std::printf("[kptools] Analyzing: %s (%zu bytes)\n", a.kernel.c_str(), data.size());
 
         ImageParser parser;
         auto info = parser.parse(data.data(), data.size());
@@ -393,11 +393,11 @@ int run(int argc, char** argv) {
     switch (a->cmd) {
         case Cmd::Help: usage(argv[0]); return 0;
         case Cmd::Version:
-            std::printf("ktool %s\n", version_str().c_str());
-#ifdef KTOOL_ANDROID
+            std::printf("kptools %s\n", version_str().c_str());
+#ifdef KPTOOLS_ANDROID
             std::printf("Platform: Android\n");
 #endif
-#ifdef KTOOL_HAVE_ZLIB
+#ifdef KPTOOLS_HAVE_ZLIB
             std::printf("zlib: yes\n");
 #endif
             return 0;
@@ -412,6 +412,6 @@ int run(int argc, char** argv) {
     }
 }
 
-} // namespace ktool
+} // namespace kptools
 
-int main(int argc, char** argv) { return ktool::run(argc, argv); }
+int main(int argc, char** argv) { return kptools::run(argc, argv); }

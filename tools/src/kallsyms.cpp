@@ -9,7 +9,7 @@
 #include <cstdio>
 #include <cctype>
 
-namespace ktool {
+namespace kptools {
 
 namespace {
 
@@ -889,4 +889,4 @@ void KallsymsFinder::print_symbols() const {
     }
 }
 
-} // namespace ktool
+} // namespace kptools

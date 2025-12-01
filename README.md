@@ -33,8 +33,7 @@ Linux 3.18 - 6.12 (theoretically)
 | Component | Description | Language |
 |-----------|-------------|----------|
 | [kpimg](./kernel/) | Kernel-level patching component | C |
-| [kptools](./tools/) | Kernel image patching utility | C++20 |
-| [ktool](./ktool/) | Kernel image analysis tool | C++17 |
+| [kptools](./tools/) | Kernel image patching utility | C++17 |
 | [kpuser](./user/) | User-space SuperCall library | C |
 | [kpms](./kpms/) | KernelPatch Module examples | C |
 

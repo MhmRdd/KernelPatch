@@ -30,7 +30,6 @@ CMakeUserPresets.json
 kpimg
 kpimg.elf
 kptools
-ktool
 
 # Logs and temporary files
 *.log

@@ -10,7 +10,7 @@
 #include <optional>
 #include <stdexcept>
 
-namespace ktool {
+namespace kptools {
 
 constexpr uint32_t kArm64Magic = 0x644d5241;
 constexpr size_t kArm64MagicOffset = 0x38;
@@ -206,4 +206,4 @@ inline uint64_t read_le64(const uint8_t* p) {
            (static_cast<uint64_t>(read_le32(p + 4)) << 32);
 }
 
-} // namespace ktool
+} // namespace kptools

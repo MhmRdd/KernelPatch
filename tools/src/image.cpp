@@ -7,11 +7,11 @@
 #include <cstring>
 #include <cstdio>
 
-#ifdef KTOOL_HAVE_ZLIB
+#ifdef KPTOOLS_HAVE_ZLIB
 #include <zlib.h>
 #endif
 
-namespace ktool {
+namespace kptools {
 
 namespace {
 
@@ -333,7 +333,7 @@ std::pair<const uint8_t*, size_t> ImageParser::get_kernel_data(
 }
 
 std::vector<uint8_t> ImageParser::decompress_gzip(const uint8_t* data, size_t size) {
-#ifdef KTOOL_HAVE_ZLIB
+#ifdef KPTOOLS_HAVE_ZLIB
     z_stream strm{};
     strm.zalloc = Z_NULL;
     strm.zfree = Z_NULL;
@@ -453,4 +453,4 @@ std::string ImageParser::page_size_str(PageSize ps) {
     }
 }
 
-} // namespace ktool
+} // namespace kptools

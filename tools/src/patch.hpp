@@ -14,7 +14,7 @@
 #include <vector>
 #include <stdexcept>
 
-namespace ktool {
+namespace kptools {
 
 namespace fs = std::filesystem;
 
@@ -135,4 +135,4 @@ public:
 const uint8_t* memmem(const uint8_t* h, size_t hl, const void* n, size_t nl);
 std::string hexify(const uint8_t* data, size_t len);
 
-} // namespace ktool
+} // namespace kptools
