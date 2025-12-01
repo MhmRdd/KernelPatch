@@ -65,10 +65,23 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "MinSizeRel"
         -fvisibility=hidden
     )
     target_compile_definitions(ktool PRIVATE NDEBUG)
-    target_link_options(ktool PRIVATE
-        -Wl,--gc-sections
-        -Wl,-s
-    )
+
+    # Platform-specific linker optimizations
+    if(APPLE)
+        target_link_options(ktool PRIVATE
+            -Wl,-dead_strip
+        )
+        # Strip symbols post-build on macOS
+        add_custom_command(TARGET ktool POST_BUILD
+            COMMAND strip $<TARGET_FILE:ktool>
+            COMMENT "[ktool] Stripping symbols"
+        )
+    else()
+        target_link_options(ktool PRIVATE
+            -Wl,--gc-sections
+            -Wl,-s
+        )
+    endif()
     message(STATUS "[ktool] Release optimizations enabled (strip + gc-sections)")
 endif()
 

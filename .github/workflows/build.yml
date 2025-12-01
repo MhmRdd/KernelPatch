@@ -225,7 +225,7 @@ jobs:
       contents: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Generate version
         shell: pwsh
         run: |
@@ -244,32 +244,27 @@ jobs:
           install: >-
             msys/make
             msys/gcc
+            msys/cmake
             msys/zlib-devel
-      - name: Copyfile
-        shell: pwsh
+      - name: Make hdr
+        shell: cmd
         run: |
-          cp .\kernel\include\preset.h .\tools\
-          cd tools
-      - name: build
+          msys2 -c 'export TARGET_COMPILE=placeholder && cd kernel && make hdr'
+      - name: Build kptools
         shell: cmd
         run: |
           cd tools
-          msys2 -c 'make'
-      - name: Showinfo
-        shell: cmd
-        run: |
-          ls D:\a\_temp\
-
-      - name: Copyfile2
+          msys2 -c 'mkdir -p build && cd build && cmake -DCMAKE_BUILD_TYPE=Release .. && make'
+      - name: Package
         shell: pwsh
         run: |
           mkdir .\win
-          cp .\tools\kptools.exe .\win\kptools-msys2.exe
+          cp .\tools\build\kptools.exe .\win\kptools-msys2.exe
           cp D:\a\_temp\msys64\usr\bin\msys-2.0.dll .\win
           cp D:\a\_temp\msys64\usr\bin\msys-z.dll .\win
-          7z a kptools-msys2-win .\win 
+          7z a kptools-msys2-win .\win
       - name: Release
-        uses: ncipollo/release-action@v1.12.0
+        uses: ncipollo/release-action@v1.14.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ env.VERSION }}
