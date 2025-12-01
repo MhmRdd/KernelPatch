@@ -347,7 +347,7 @@ jobs:
           mkdir -p build && cd build
           cmake -DCMAKE_BUILD_TYPE=Release ..
           make
-          mv ktool ktool-linux
+          mv bin/ktool ktool-linux
 
       - name: Release
         uses: ncipollo/release-action@v1.14.0
@@ -395,7 +395,7 @@ jobs:
             -DKTOOL_ANDROID=ON \
             ../..
           cmake --build .
-          mv ktool ktool-android
+          mv bin/ktool ktool-android
 
       - name: Release
         uses: ncipollo/release-action@v1.14.0
@@ -430,7 +430,7 @@ jobs:
           mkdir -p build && cd build
           cmake -DCMAKE_BUILD_TYPE=Release ..
           make
-          mv ktool ktool-mac
+          mv bin/ktool ktool-mac
 
       - name: Release
         uses: ncipollo/release-action@v1.14.0
