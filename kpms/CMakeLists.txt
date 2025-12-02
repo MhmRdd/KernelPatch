@@ -141,6 +141,11 @@ add_kpm_module(demo-syscallhook
     SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/demo-syscallhook/syscallhook.c
 )
 
+# kpm-sampolicy module
+add_kpm_module(kpm-sampolicy
+    SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/kpm-sampolicy/sampolicy.c
+)
+
 # ============================================================================
 # All Modules Target
 # ============================================================================
@@ -180,6 +185,7 @@ add_custom_target(kpms_Push
     COMMAND adb push ${KPM_OUTPUT_DIR}/demo-hello.kpm /data/local/tmp/
     COMMAND adb push ${KPM_OUTPUT_DIR}/demo-inlinehook.kpm /data/local/tmp/
     COMMAND adb push ${KPM_OUTPUT_DIR}/demo-syscallhook.kpm /data/local/tmp/
+    COMMAND adb push ${KPM_OUTPUT_DIR}/kpm-sampolicy.kpm /data/local/tmp/
     COMMENT "[kpms] Pushing all modules to /data/local/tmp/"
 )
 
@@ -189,6 +195,7 @@ add_custom_target(kpms_BuildAndPush
     COMMAND adb push ${KPM_OUTPUT_DIR}/demo-hello.kpm /data/local/tmp/
     COMMAND adb push ${KPM_OUTPUT_DIR}/demo-inlinehook.kpm /data/local/tmp/
     COMMAND adb push ${KPM_OUTPUT_DIR}/demo-syscallhook.kpm /data/local/tmp/
+    COMMAND adb push ${KPM_OUTPUT_DIR}/kpm-sampolicy.kpm /data/local/tmp/
     COMMENT "[kpms] Building and pushing all modules..."
 )
 
@@ -230,6 +237,18 @@ add_custom_target(kpm_syscallhook_BuildAndPush
     DEPENDS kpm_demo-syscallhook
     COMMAND adb push ${KPM_OUTPUT_DIR}/demo-syscallhook.kpm /data/local/tmp/
     COMMENT "[kpms] Building and pushing demo-syscallhook.kpm"
+)
+
+# kpm-sampolicy
+add_custom_target(kpm_sampolicy_Push
+    COMMAND adb push ${KPM_OUTPUT_DIR}/kpm-sampolicy.kpm /data/local/tmp/
+    COMMENT "[kpms] Pushing kpm-sampolicy.kpm"
+)
+
+add_custom_target(kpm_sampolicy_BuildAndPush
+    DEPENDS kpm_kpm-sampolicy
+    COMMAND adb push ${KPM_OUTPUT_DIR}/kpm-sampolicy.kpm /data/local/tmp/
+    COMMENT "[kpms] Building and pushing kpm-sampolicy.kpm"
 )
 
 # ============================================================================

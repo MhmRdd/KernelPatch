@@ -60,6 +60,10 @@ jobs:
           make
           mv syscallhook.kpm demo-syscallhook.kpm
 
+          cd ../kpm-sampolicy
+          make
+          mv sampolicy.kpm kpm-sampolicy.kpm
+
       - name: Upload elf
         uses: actions/upload-artifact@v4
         with:
@@ -79,6 +83,7 @@ jobs:
             kpms/demo-hello/demo-hello.kpm
             kpms/demo-inlinehook/demo-inlinehook.kpm
             kpms/demo-syscallhook/demo-syscallhook.kpm
+            kpms/kpm-sampolicy/kpm-sampolicy.kpm
           generateReleaseNotes: true
           allowUpdates: true
           replacesArtifacts: true
