@@ -10,13 +10,18 @@ cmake_minimum_required(VERSION 3.20)
 project(kptools
     VERSION 1.0.0
     DESCRIPTION "KernelPatch kernel image patching tool"
-    LANGUAGES CXX
+    LANGUAGES C CXX
 )
 
 # C++ Standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+
+# C Standard with GNU extensions (enables binary literals for ARM64 instruction decoding)
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_C_EXTENSIONS ON)
 
 # Default to Release build if not specified
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -28,6 +33,17 @@ endif()
 option(KPTOOLS_ANDROID "Build for Android target" OFF)
 option(KPTOOLS_STATIC "Build static binary" OFF)
 
+# ARM64 Disassembler/Assembler library (C sources)
+set(DISASM_SOURCES
+    disasm/arm64_disasm.c
+    disasm/arm64_asm.c
+)
+
+# Disable pedantic warnings for disasm (uses binary literals for clarity)
+set_source_files_properties(${DISASM_SOURCES} PROPERTIES
+    COMPILE_FLAGS "-Wno-pedantic"
+)
+
 # Source files
 set(KPTOOLS_SOURCES
     src/main.cpp
@@ -35,12 +51,14 @@ set(KPTOOLS_SOURCES
     src/ikconfig.cpp
     src/image.cpp
     src/patch.cpp
+    ${DISASM_SOURCES}
 )
 
 # Include directories
 set(KPTOOLS_INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/disasm/include
 )
 
 # Create executable

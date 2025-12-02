@@ -1,8 +1,9 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 /* Copyright (C) 2024 bmax121. All Rights Reserved. */
+/* Copyright (C) 2025 mhmrdd. All Rights Reserved. */
 
 #include "patch.hpp"
-#include "arm64_insn.hpp"
+#include "arm64_wrap.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -339,13 +340,13 @@ void Patcher::patch(const PatchOptions& opts) {
 
     // Get paging_init offset and follow branch if present (relo_branch_func logic)
     int64_t paging_init_off = require_offset(ksym, "paging_init");
-    uint32_t paging_insn = *reinterpret_cast<const uint32_t*>(kf.data() + paging_init_off);
-    if (arm64::is_branch(paging_insn)) {
-        int64_t branch_target = paging_init_off + arm64::branch_offset(paging_insn);
+    arm64_insn_t paging_insn = arm64::disasm_one(kf.data() + paging_init_off);
+    if (arm64::is_branch(paging_insn) && paging_insn.id == ARM64_INS_B) {
+        int64_t target = arm64::branch_target(paging_insn);
         log("[+] paging_init branch relocated: 0x%llx -> 0x%llx\n",
             static_cast<unsigned long long>(paging_init_off),
-            static_cast<unsigned long long>(branch_target));
-        paging_init_off = branch_target;
+            static_cast<unsigned long long>(target));
+        paging_init_off = target;
     }
     setup.paging_init_offset = paging_init_off;
 

@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2024 bmax121. All Rights Reserved.
+ * Copyright (C) 2025 mhmrdd. All Rights Reserved.
  *
  * IKCONFIG (kernel .config) finder and extractor.
  * Extracts the embedded kernel configuration from raw kernel images.

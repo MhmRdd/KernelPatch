@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 /* Copyright (C) 2024 bmax121. All Rights Reserved. */
+/* Copyright (C) 2025 mhmrdd. All Rights Reserved. */
 
 #include "kallsyms.hpp"
 #include "ikconfig.hpp"
