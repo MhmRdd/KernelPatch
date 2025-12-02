@@ -24,8 +24,40 @@ KPM_DESCRIPTION("Samsung policy module - blocks exynos-s2mpu init and dm-verity 
 #define MODULE_NAME_LEN 56
 #define BLOCKED_MODULE "exynos-s2mpu"
 
-/* Search range for finding init pointer in struct module */
-#define MODULE_STRUCT_SEARCH_SIZE 4096
+/*
+ * Search range for finding init pointer in struct module.
+ *
+ * Calculated offset to init field on ARM64 (Samsung kernel config):
+ *   - enum module_state state          : 4 + 4 padding = 8
+ *   - struct list_head list            : 16
+ *   - char name[56]                    : 56
+ *   - struct module_kobject mkobj      : ~88 (kobject ~64 + ptrs)
+ *   - module_attribute *modinfo_attrs  : 8
+ *   - const char *version              : 8
+ *   - const char *srcversion           : 8
+ *   - struct kobject *holders_dir      : 8
+ *   - const struct kernel_symbol *syms : 8
+ *   - const s32 *crcs                  : 8
+ *   - unsigned int num_syms            : 4 + 4 padding
+ *   - struct mutex param_lock (SYSFS=y): ~40
+ *   - struct kernel_param *kp          : 8
+ *   - unsigned int num_kp              : 4 + 4 padding
+ *   - unsigned int num_gpl_syms        : 4
+ *   - const struct kernel_symbol *gpl_syms : 8
+ *   - const s32 *gpl_crcs              : 8
+ *   - bool using_gplonly_symbols       : 1 + 7 padding
+ *   - bool async_probe_requested       : 1 + 7 padding
+ *   - const struct kernel_symbol *gpl_future_syms : 8
+ *   - const s32 *gpl_future_crcs       : 8
+ *   - unsigned int num_gpl_future_syms : 4 + 4 padding
+ *   - unsigned int num_exentries       : 4 + 4 padding
+ *   - struct exception_table_entry *extable : 8
+ *   - int (*init)(void)                : 8  <-- TARGET
+ *
+ * Estimated offset: ~350-400 bytes. Use 512 for safety margin.
+ * CONFIG_UNUSED_SYMBOLS=n, CONFIG_MODULE_SIG=n on this kernel.
+ */
+#define MODULE_STRUCT_SEARCH_SIZE 512
 
 static void *do_init_module_func = NULL;
 static void *do_one_initcall_func = NULL;
