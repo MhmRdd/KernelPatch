@@ -171,6 +171,25 @@ static int path_is_exact(const char *path, const char *target)
     return path && target && strcmp(path, target) == 0;
 }
 
+static int is_packages_list_rename_path(const char *oldpath, const char *newpath)
+{
+    if (!newpath) return 0;
+
+    if (path_is_exact(newpath, ANDROID_PACKAGES_LIST_PATH) ||
+        path_has_suffix(newpath, "/system/packages.list")) {
+        return 1;
+    }
+
+    if (path_is_exact(newpath, "packages.list") &&
+        oldpath &&
+        (path_is_exact(oldpath, "packages.list.tmp") ||
+         path_has_suffix(oldpath, "/system/packages.list.tmp"))) {
+        return 1;
+    }
+
+    return 0;
+}
+
 static int read_le32(struct file *fp, loff_t *pos, uint32_t *out)
 {
     return kernel_read(fp, out, sizeof(*out), pos) == sizeof(*out) ? 0 : -EIO;
@@ -1600,6 +1619,42 @@ static void after_openat(hook_fargs4_t *args, void *udata)
         unhook_syscalln(__NR_openat, before_openat, after_openat);
     }
 }
+
+// SYSCALL_DEFINE4(renameat, int, olddfd, const char __user *, oldname,
+//                 int, newdfd, const char __user *, newname)
+static void before_renameat(hook_fargs4_t *args, void *udata)
+{
+    const char __user *oldname;
+    const char __user *newname;
+    char oldpath[256];
+    char newpath[256];
+    long old_rc;
+    long new_rc;
+
+    args->local.data0 = 0;
+
+    oldname = (typeof(oldname))syscall_argn(args, 1);
+    newname = (typeof(newname))syscall_argn(args, 3);
+
+    new_rc = compat_strncpy_from_user(newpath, newname, sizeof(newpath));
+    if (new_rc <= 0) return;
+
+    old_rc = compat_strncpy_from_user(oldpath, oldname, sizeof(oldpath));
+    if (old_rc <= 0) oldpath[0] = '\0';
+
+    if (is_packages_list_rename_path(oldpath, newpath)) {
+        args->local.data0 = 1;
+    }
+}
+
+static void after_renameat(hook_fargs4_t *args, void *udata)
+{
+    if (args->local.data0 && (long)args->ret >= 0) {
+        int rc = refresh_trusted_manager_state();
+        log_boot("packages.list rename refresh trusted manager rc=%d\n", rc);
+    }
+}
+
 #define EV_KEY 0x01
 #define KEY_VOLUMEDOWN 114
 
@@ -1637,6 +1692,10 @@ int android_user_init()
 
     rc = hook_syscalln(__NR_openat, 4, before_openat, after_openat, 0);
     log_boot("hook __NR_openat rc: %d\n", rc);
+    ret |= rc;
+
+    rc = hook_syscalln(__NR_renameat, 4, before_renameat, after_renameat, 0);
+    log_boot("hook __NR_renameat rc: %d\n", rc);
     ret |= rc;
 
     unsigned long input_handle_event_addr = patch_config->input_handle_event;
