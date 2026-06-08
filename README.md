@@ -39,6 +39,7 @@ Linux 3.18 - 6.6 (theoretically)
 - [vmlinux-to-elf](https://github.com/marin-m/vmlinux-to-elf): Some ideas for parsing kernel symbols.
 - [android-inline-hook](https://github.com/bytedance/android-inline-hook): Some code for fixing arm64 inline hook instructions.
 - [tlsf](https://github.com/mattconte/tlsf): Memory allocator used for KPM. (Need another to allocate ROX memory.)
+- [puff](https://github.com/madler/zlib/tree/master/contrib/puff): Minimal inflate (zlib License) used to decompress the kernel's CONFIG_IKCONFIG data for KPM kernel config resolution.
 
 ## License
 

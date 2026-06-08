@@ -60,6 +60,10 @@ jobs:
           make
           mv syscallhook.kpm demo-syscallhook.kpm
 
+          cd ../demo-kconfig
+          make
+          mv kconfig.kpm demo-kconfig.kpm
+
       - name: Upload elf
         uses: actions/upload-artifact@v4
         with:
@@ -79,6 +83,7 @@ jobs:
             kpms/demo-hello/demo-hello.kpm
             kpms/demo-inlinehook/demo-inlinehook.kpm
             kpms/demo-syscallhook/demo-syscallhook.kpm
+            kpms/demo-kconfig/demo-kconfig.kpm
           generateReleaseNotes: true
           allowUpdates: true
           replacesArtifacts: true

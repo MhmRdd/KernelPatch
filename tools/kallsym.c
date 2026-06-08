@@ -1132,6 +1132,30 @@ int dump_all_ikconfig(char *img, int32_t imglen)
     return 0;
 }
 
+// Locate the gzipped CONFIG_IKCONFIG blob. On success *offset points at the
+// gzip stream (right after IKCFG_ST, at the 1f 8b magic) relative to img, and
+// *size is the gzip byte length up to the IKCFG_ED marker. Returns 0 on
+// success, -1 when the kernel was built without CONFIG_IKCONFIG.
+int find_ikconfig(const char *img, int32_t imglen, int32_t *offset, int32_t *size)
+{
+    const char *st = (const char *)memmem(img, imglen, IKCFG_ST, strlen(IKCFG_ST));
+    if (!st) return -1;
+
+    const char *gz = st + strlen(IKCFG_ST);
+    const char *imgend = img + imglen;
+    // validate the gzip magic and deflate method, guards against a stray marker
+    if (imgend - gz < 3 || (uint8_t)gz[0] != 0x1f || (uint8_t)gz[1] != 0x8b || (uint8_t)gz[2] != 0x08) {
+        return -1;
+    }
+
+    const char *ed = (const char *)memmem(gz, imgend - gz, IKCFG_ED, strlen(IKCFG_ED));
+    if (!ed) return -1;
+
+    *offset = (int32_t)(gz - img);
+    *size = (int32_t)(ed - gz);
+    return 0;
+}
+
 int on_each_symbol(kallsym_t *info, char *img, void *userdata,
                    int32_t (*fn)(int32_t index, char type, const char *symbol, int32_t offset, void *userdata))
 {

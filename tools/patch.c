@@ -613,6 +613,18 @@ int patch_update_img(const char *kimg_path, const char *kpimg_path, const char *
     if (!setup->printk_offset) setup->printk_offset = get_symbol_offset_zero(&kallsym, kallsym_kimg, "_printk");
     if (!setup->printk_offset) tools_loge_exit("no symbol printk\n");
 
+    // kernel config (CONFIG_IKCONFIG) location, given to the engine for KPM config resolution
+    int32_t kcfg_off = 0, kcfg_size = 0;
+    if (!find_ikconfig(kallsym_kimg, ori_kimg_len, &kcfg_off, &kcfg_size)) {
+        setup->kconfig_offset = kcfg_off;
+        setup->kconfig_size = kcfg_size;
+        tools_logi("ikconfig: offset 0x%x, size 0x%x\n", kcfg_off, kcfg_size);
+    } else {
+        setup->kconfig_offset = 0;
+        setup->kconfig_size = 0;
+        tools_logw("no CONFIG_IKCONFIG found, KPM kernel config resolution will be disabled\n");
+    }
+
     if ((is_be() ^ kinfo->is_be)) {
         setup->kimg_size = i64swp(setup->kimg_size);
         setup->kernel_size = i64swp(setup->kernel_size);
@@ -627,6 +639,8 @@ int patch_update_img(const char *kimg_path, const char *kpimg_path, const char *
         setup->symbol_lookup_anchor_offset = i64swp(setup->symbol_lookup_anchor_offset);
         setup->paging_init_offset = i64swp(setup->paging_init_offset);
         setup->printk_offset = i64swp(setup->printk_offset);
+        setup->kconfig_offset = i64swp(setup->kconfig_offset);
+        setup->kconfig_size = i64swp(setup->kconfig_size);
     }
 
     // map symbol

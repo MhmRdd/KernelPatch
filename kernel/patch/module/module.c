@@ -25,6 +25,7 @@
 
 #include "module.h"
 #include "relo.h"
+#include "kconfig.h"
 
 #define SZ_128M 0x08000000
 
@@ -662,4 +663,5 @@ void module_init()
 {
     INIT_LIST_HEAD(&modules.list);
     spin_lock_init(&module_lock);
+    kpm_kconfig_init();
 }

@@ -11,6 +11,7 @@
 #include <cache.h>
 #include <symbol.h>
 #include <predata.h>
+#include <kconfig.h>
 #include <barrier.h>
 #include <stdarg.h>
 
@@ -568,6 +569,15 @@ static int start_init(uint64_t kimage_voff, uint64_t linear_voff)
              kallsyms_resolver);
 
     log_boot("KernelPatch link base: %llx, runtime base: %llx\n", link_base_addr, runtime_base_addr);
+
+    if (start_preset.kconfig_offset && start_preset.kconfig_size) {
+        kp_kconfig_data = (const void *)(kernel_va + start_preset.kconfig_offset);
+        kp_kconfig_data_size = (unsigned long)start_preset.kconfig_size;
+        log_boot("ikconfig offset: %llx, size: %llx\n", (uint64_t)start_preset.kconfig_offset,
+                 (uint64_t)start_preset.kconfig_size);
+    } else {
+        log_boot("ikconfig: not present\n");
+    }
 
     kallsyms_on_each_symbol = (typeof(kallsyms_on_each_symbol))kallsyms_lookup_name("kallsyms_on_each_symbol");
     kernel_kallsyms_on_each_match_symbol =
