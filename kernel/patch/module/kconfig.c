@@ -31,10 +31,36 @@ struct kconfig_entry
 static struct list_head kconfig_cache;
 static spinlock_t kconfig_lock;
 
+// Decompressed .config kept resident only while a load phase is open
+// (load_depth > 0), so a burst of lookups shares one decompression.
+static char *kconfig_text;
+static unsigned long kconfig_text_len;
+static int kconfig_load_depth;
+
 void kpm_kconfig_init(void)
 {
     INIT_LIST_HEAD(&kconfig_cache);
     spin_lock_init(&kconfig_lock);
+}
+
+void kpm_kconfig_load_begin(void)
+{
+    spin_lock(&kconfig_lock);
+    kconfig_load_depth++;
+    spin_unlock(&kconfig_lock);
+}
+
+void kpm_kconfig_load_end(void)
+{
+    char *tofree = 0;
+    spin_lock(&kconfig_lock);
+    if (kconfig_load_depth > 0 && --kconfig_load_depth == 0) {
+        tofree = kconfig_text;
+        kconfig_text = 0;
+        kconfig_text_len = 0;
+    }
+    spin_unlock(&kconfig_lock);
+    if (tofree) vfree(tofree);
 }
 
 static const unsigned char *gz_deflate_start(const unsigned char *gz, unsigned long gz_len, unsigned long *deflate_len,
@@ -163,25 +189,54 @@ const char *kpm_kconfig_get(const char *key)
     spin_unlock(&kconfig_lock);
     if (e) return e->value;
 
-    unsigned long tlen = 0;
-    char *text = kconfig_decompress(&tlen);
-    if (!text) return 0; // do not cache, allow a later retry
+    // hold the window open for this lookup so a shared text cannot be freed
+    // under us, and so distinct keys within one phase share one decompression
+    kpm_kconfig_load_begin();
+
+    const char *text;
+    unsigned long tlen;
+    char *local = 0;
+
+    spin_lock(&kconfig_lock);
+    text = kconfig_text;
+    tlen = kconfig_text_len;
+    spin_unlock(&kconfig_lock);
+
+    if (!text) {
+        local = kconfig_decompress(&tlen);
+        spin_lock(&kconfig_lock);
+        if (kconfig_text) {
+            text = kconfig_text;
+            tlen = kconfig_text_len;
+        } else if (local) {
+            kconfig_text = local;
+            kconfig_text_len = tlen;
+            text = local;
+            local = 0;
+        }
+        spin_unlock(&kconfig_lock);
+    }
 
     const char *val = 0;
     unsigned long vlen = 0;
-    int found = kconfig_find(text, tlen, key, lib_strlen(key), &val, &vlen);
-    if (found && vlen >= 2 && val[0] == '"' && val[vlen - 1] == '"') { // unquote string values
-        val++;
-        vlen -= 2;
+    if (text && kconfig_find(text, tlen, key, lib_strlen(key), &val, &vlen)) {
+        if (vlen >= 2 && val[0] == '"' && val[vlen - 1] == '"') {
+            val++;
+            vlen -= 2;
+        }
+    } else {
+        val = 0;
     }
 
     unsigned long klen = lib_strlen(key);
     spin_lock(&kconfig_lock);
     e = cache_find(key);
-    if (!e) e = cache_add(key, klen, found ? val : 0, found ? vlen : 0);
+    if (!e && text) e = cache_add(key, klen, val, vlen); // text NULL means decompress failed, allow retry
     spin_unlock(&kconfig_lock);
 
-    vfree(text);
+    if (local) vfree(local);
+    kpm_kconfig_load_end();
+
     return e ? e->value : 0;
 }
 KP_EXPORT_SYMBOL(kpm_kconfig_get);

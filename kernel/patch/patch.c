@@ -9,6 +9,7 @@
 #include <linux/capability.h>
 #include <syscall.h>
 #include <module.h>
+#include <kconfig.h>
 #include <predata.h>
 #include <symbol.h>
 #include <linux/string.h>
@@ -123,7 +124,9 @@ void extra_event_init(const char *event)
 {
     if (!event) return;
     log_boot("event: %s\n", event);
+    kpm_kconfig_load_begin();
     on_each_extra_item(extra_event_load_kpm, (void *)event);
+    kpm_kconfig_load_end();
 }
 KP_EXPORT_SYMBOL(extra_event_init);
 

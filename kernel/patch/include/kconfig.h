@@ -16,5 +16,7 @@ extern const void *kp_kconfig_data;
 extern unsigned long kp_kconfig_data_size;
 
 void kpm_kconfig_init(void);
+void kpm_kconfig_load_begin(void);
+void kpm_kconfig_load_end(void);
 
 #endif

@@ -433,7 +433,9 @@ long load_module(const void *data, int len, const char *args, const char *event,
 
     flush_icache_all();
 
+    kpm_kconfig_load_begin();
     rc = (*mod->init)(mod->args, event, reserved);
+    kpm_kconfig_load_end();
 
     if (!rc) {
         logkfi("[%s] succeed with [%s] \n", mod->info.name, args);
