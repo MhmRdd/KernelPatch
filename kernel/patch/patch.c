@@ -41,6 +41,13 @@ void before_panic(hook_fargs12_t *args, void *udata)
     printk("==== End KernelPatch for Kernel panic ====\n");
 }
 
+// die(const char *str, struct pt_regs *regs, int err): capture oops/faults via a
+// function hook instead of a CFI-checked die-notifier callback.
+void before_die(hook_fargs12_t *args, void *udata)
+{
+    kpstore_tombstone((const char *)args->arg0, (struct pt_regs *)args->arg1);
+}
+
 void linux_misc_symbol_init();
 void linux_libs_symbol_init();
 void hotpatch_symbol_init();
@@ -159,6 +166,14 @@ int patch()
         log_boot("hook panic rc: %d\n", rc);
     }
     if (rc) return rc;
+
+    // oops/fault capture via a function hook on die() (CFI-safe, unlike a die-notifier).
+    unsigned long die_addr = kallsyms_lookup_name("die");
+    if (die_addr) {
+        hook_err_t drc = hook_wrap12((void *)die_addr, before_die, 0, 0);
+        log_boot("hook die rc: %d
+", drc);
+    }
 
     extra_event_init(EXTRA_EVENT_PAGING_INIT);
 
