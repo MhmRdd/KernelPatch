@@ -474,6 +474,9 @@ void kpstore_tombstone(const char *reason, struct pt_regs *regs)
         dump_backtrace(fp, 0);
     }
     dump_kp();
+    // persist the essential record before the best-effort extras below: if one of
+    // them faults on a hardened kernel we still keep a tombstone instead of nothing.
+    persist_write();
     dump_modules();
     dump_hooks();
     dump_dmesg();
@@ -721,31 +724,11 @@ void kpstore_persist_reserve(void)
         log_boot("kpstore: no persistent region reserved\n");
 }
 
-static int kp_die_cb(struct kp_notifier_block *nb, unsigned long action, void *data)
-{
-    struct kp_die_args *a = (struct kp_die_args *)data;
-    (void)nb;
-    (void)action;
-    if (a && a->regs) kpstore_tombstone(a->str ? a->str : "die", a->regs);
-    return 0; // NOTIFY_DONE
-}
-
-static struct kp_notifier_block kp_die_nb = { kp_die_cb, 0, 0 };
-
-// panic() does not walk the die chain - it walks panic_notifier_list with the panic
-// message as data (no regs). Capture a tombstone there too, otherwise an explicit
-// panic (e.g. SUPERCALL_PANIC) records nothing and survives no reboot.
-static int kp_panic_cb(struct kp_notifier_block *nb, unsigned long action, void *data)
-{
-    (void)nb;
-    (void)action;
-    kpstore_tombstone(data ? (const char *)data : "panic", 0);
-    return 0; // NOTIFY_DONE
-}
-
-static struct kp_notifier_block kp_panic_nb = { kp_panic_cb, 0, 0 };
-
-// die notifier covers oopses/faults (with regs); panic notifier covers panic().
+// Crash capture is driven only by function hooks (before_panic / before_die in patch.c),
+// never notifier callbacks. The kernel invokes notifier callbacks through CFI-checked
+// indirect calls; KP's callbacks carry no matching kCFI hash, so that call itself faults
+// on hardened kernels (CFI failure -> nested-panic loop). An inline function hook patches
+// the target's entry and is not CFI-checked.
 void kpstore_crash_init(void)
 {
     if (!rec_buf) {
@@ -753,13 +736,4 @@ void kpstore_crash_init(void)
         rec_cap = rec_buf ? REC_SIZE : 0;
     }
     if (!lz4_ws) lz4_ws = kp_malloc(KPLZ4_WORKSPACE_SIZE);
-
-    int (*reg_die)(struct kp_notifier_block *) = (typeof(reg_die))kallsyms_lookup_name("register_die_notifier");
-    if (reg_die) reg_die(&kp_die_nb);
-
-    // panic_notifier_list is a struct atomic_notifier_head; the symbol address is the head.
-    int (*reg_atomic)(void *, struct kp_notifier_block *) =
-        (typeof(reg_atomic))kallsyms_lookup_name("atomic_notifier_chain_register");
-    void *panic_list = (void *)kallsyms_lookup_name("panic_notifier_list");
-    if (reg_atomic && panic_list) reg_atomic(panic_list, &kp_panic_nb);
 }
