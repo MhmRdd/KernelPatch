@@ -263,8 +263,7 @@ int parse_image_patch_info(const char *kimg, int kimg_len, patched_kimg_t *pimg)
     if (hb[0] | hb[1] | hb[2] | hb[3]) {
         memcpy((char *)kimg, hb, sizeof(old_preset->setup.header_backup));
     } else {
-        tools_logw("header_backup reads zeroed (old preset layout?), keeping image header
-");
+        tools_logw("header_backup reads zeroed (old preset layout?), keeping image header\n");
     }
 
     // extra
