@@ -262,7 +262,7 @@ int parse_image_patch_info(const char *kimg, int kimg_len, patched_kimg_t *pimg)
     // entry: code0 -> 0 (udf at boot) and the original 'b primary_entry' lost (boot loop).
     version_t ov = old_preset->header.kp_version;
     uint32_t over = (ov.major << 16) + (ov.minor << 8) + ov.patch;
-    const char *hb = (const char *)&old_preset->setup + setup_header_backup_offset;
+    const char *hb = (const char *)old_preset->setup.header_backup; // current-layout offset
     if (over < 0x000d02) hb -= (7 - 5) * 8; // pre-0.13.2 map_symbol had 5 entries
     memcpy((char *)kimg, hb, sizeof(old_preset->setup.header_backup));
 
