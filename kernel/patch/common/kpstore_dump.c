@@ -674,13 +674,14 @@ int kpstore_persist_erase(int level)
     return 1;
 }
 
-// reserve the persistent region from memblock, before the buddy handoff. Stage
-// (a) uses a deterministic top-of-DRAM slot, stage (b) will use the kptools
-// baked address. The same base every boot is what lets the next boot find the
-// previous boot's records
+// reserve the persistent region from memblock, before the buddy handoff. The
+// base is a deterministic top-of-DRAM slot derived only from the physical DRAM
+// extent -- a hardware constant unaffected by KASLR -- so it is the same
+// physical address on every boot, which is what lets the next boot find the
+// previous boot's records. The live memblock is the authority for whether it is
+// free, and reserving before the buddy handoff keeps the kernel off it
 void kpstore_persist_reserve(void)
 {
-    extern uint64_t kpstore_reserved_pa, kpstore_reserved_size;
     typedef int (*reserve_t)(uint64_t base, uint64_t size);
     typedef uint64_t (*bound_t)(void);
     typedef int (*region_t)(uint64_t base, uint64_t size);
@@ -688,37 +689,16 @@ void kpstore_persist_reserve(void)
     reserve_t memblock_reserve = (reserve_t)kallsyms_lookup_name("memblock_reserve");
     bound_t memblock_end_of_DRAM = (bound_t)kallsyms_lookup_name("memblock_end_of_DRAM");
     if (!memblock_reserve || !memblock_end_of_DRAM) return;
-    region_t is_memory = (region_t)kallsyms_lookup_name("memblock_is_region_memory");
     region_t is_reserved = (region_t)kallsyms_lookup_name("memblock_is_region_reserved");
 
     uint64_t size = KPSTORE_REGION_SIZE;
-
-    // prefer the address kptools baked into the preset at install time, but the
-    // live memblock is the authority: only claim it if it is real DRAM and not
-    // already reserved, so a stale or wrong baked address cannot corrupt memory
-    if (kpstore_reserved_pa && kpstore_reserved_size >= size) {
-        uint64_t cand = kpstore_reserved_pa;
-        int ok = 1;
-        if (is_memory && !is_memory(cand, size)) ok = 0;
-        if (is_reserved && is_reserved(cand, size)) ok = 0;
-        if (ok && memblock_reserve(cand, size) == 0) {
-            persist_pa = cand;
+    uint64_t align = 0x200000;
+    uint64_t end = memblock_end_of_DRAM();
+    if (end > size + align) {
+        uint64_t base = (end - size) & ~(align - 1);
+        if (!(is_reserved && is_reserved(base, size)) && memblock_reserve(base, size) == 0) {
+            persist_pa = base;
             persist_size = (int)size;
-        }
-    }
-
-    // fallback: deterministic top-of-DRAM slot. The base is derived only from
-    // the physical DRAM extent (a hardware constant unaffected by KASLR), so it
-    // is the same physical address on every boot and the records are retrievable
-    if (!persist_pa) {
-        uint64_t align = 0x200000;
-        uint64_t end = memblock_end_of_DRAM();
-        if (end > size + align) {
-            uint64_t base = (end - size) & ~(align - 1);
-            if (!(is_reserved && is_reserved(base, size)) && memblock_reserve(base, size) == 0) {
-                persist_pa = base;
-                persist_size = (int)size;
-            }
         }
     }
 

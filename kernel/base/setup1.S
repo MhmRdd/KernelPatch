@@ -99,14 +99,6 @@ start_prepare:
     ldr x13, [x10, #setup_symbol_lookup_anchor_offset_offset]
     str x13, [x11, #start_symbol_lookup_anchor_offset_offset]
 
-    // start_preset.kpstore_pa = setup_preset.kpstore_pa
-    ldr x13, [x10, #setup_kpstore_pa_offset]
-    str x13, [x11, #start_kpstore_pa_offset]
-
-    // start_preset.kpstore_size = setup_preset.kpstore_size
-    ldr x13, [x10, #setup_kpstore_size_offset]
-    str x13, [x11, #start_kpstore_size_offset]
-
     // memcpy(&start_preset.setup, &setup_header, KP_HEADER_SIZE);
     add x0, x11, #start_header_offset
     add x1, x12, #0
