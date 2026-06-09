@@ -9,6 +9,7 @@
 #include <linux/capability.h>
 #include <syscall.h>
 #include <module.h>
+#include <kpstore.h>
 #include <predata.h>
 #include <symbol.h>
 #include <linux/string.h>
@@ -36,6 +37,7 @@ void before_panic(hook_fargs12_t *args, void *udata)
 {
     printk("==== Start KernelPatch for Kernel panic ====\n");
     print_bootlog();
+    kpstore_tombstone((const char *)args->arg0, 0);
     printk("==== End KernelPatch for Kernel panic ====\n");
 }
 
@@ -141,6 +143,9 @@ int patch()
 {
     linux_libs_symbol_init();
     linux_misc_symbol_init();
+    kpstore_init();
+    kpstore_persist_reserve();
+    kpstore_crash_init();
     hotpatch_symbol_init();
     module_init();
     syscall_init();

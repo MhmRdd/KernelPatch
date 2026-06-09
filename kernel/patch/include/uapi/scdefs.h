@@ -62,6 +62,7 @@ struct kernel_storage
 #define KSTORAGE_UNUSED_GROUP_2 2
 #define KSTORAGE_UNUSED_GROUP_3 3
 
+#define SUPERCALL_KPSTORE_READ 0x10fc
 #define SUPERCALL_BOOTLOG 0x10fd
 #define SUPERCALL_PANIC 0x10fe
 #define SUPERCALL_TEST 0x10ff

@@ -31,6 +31,7 @@
 #include <sucompat.h>
 #include <accctl.h>
 #include <kstorage.h>
+#include <kpstore.h>
 #ifdef ANDROID
 #include <userd.h>
 #endif
@@ -73,6 +74,18 @@ static long call_buildtime(char __user *out_buildtime, int u_len)
     if (len >= u_len) return -ENOMEM;
     int rc = compat_copy_to_user(out_buildtime, buildtime, len + 1);
     return rc;
+}
+
+// which: 0 = this boot's live tombstone, 1 = the previous boot's persistent one
+static long call_kpstore_read(char __user *out, int u_len, int which)
+{
+    int len = 0;
+    const char *rec = which ? kpstore_persist_data(&len) : kpstore_record_data(&len);
+    if (!rec || len <= 0) return 0;
+    if (u_len <= 0) return -EINVAL;
+    if (len > u_len) len = u_len;
+    long rc = compat_copy_to_user(out, (void *)rec, len);
+    return rc ? rc : len;
 }
 
 static long call_kpm_load(const char __user *arg1, const char *__user arg2, void *__user reserved)
@@ -369,6 +382,8 @@ static long supercall(int is_authed, long cmd, long arg1, long arg2, long arg3, 
         return call_kpm_list((char *__user)arg1, (int)arg2);
     case SUPERCALL_KPM_INFO:
         return call_kpm_info((const char *__user)arg1, (char *__user)arg2, (int)arg3);
+    case SUPERCALL_KPSTORE_READ:
+        return call_kpstore_read((char *__user)arg1, (int)arg2, (int)arg3);
     }
 
     switch (cmd) {

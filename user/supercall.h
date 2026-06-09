@@ -544,6 +544,23 @@ static inline long sc_bootlog(const char *key)
     return ret;
 }
 
+/**
+ * @brief Read the kpstore crash tombstone.
+ *
+ * @param key : superkey
+ * @param buf : output buffer for the tombstone text
+ * @param buf_len : size of buf
+ * @param prev : 0 for this boot's live record, 1 for the previous boot's persistent one
+ * @return long : bytes written if succeed, 0 if no record, negative value if failed
+ */
+static inline long sc_kpstore_read(const char *key, char *buf, int buf_len, int prev)
+{
+    if (!key || !key[0]) return -EINVAL;
+    if (!buf || buf_len <= 0) return -EINVAL;
+    long ret = syscall(__NR_supercall, key, ver_and_cmd(key, SUPERCALL_KPSTORE_READ), buf, buf_len, prev);
+    return ret;
+}
+
 static inline long sc_panic(const char *key)
 {
     long ret = syscall(__NR_supercall, key, ver_and_cmd(key, SUPERCALL_PANIC));
