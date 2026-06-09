@@ -254,17 +254,17 @@ int parse_image_patch_info(const char *kimg, int kimg_len, patched_kimg_t *pimg)
     tools_logi("patched kernel image ...\n");
     pimg->ori_kimg_len = saved_kimg_len;
 
-    // The saved header_backup holds the kernel's original first instructions (code0 = the
-    // EFI "MZ" stub, never zero for a bootable arm64 Image). If it reads back all-zero, the
-    // old preset was written with a different layout (e.g. pre-0.13.2 MAP_SYMBOL_NUM 5 vs 7,
-    // which shifts header_backup's offset) and we're looking at zero-filled reserve. Restoring
-    // that would clobber code0 and brick the boot, so keep the image's existing (valid) header.
-    const uint8_t *hb = old_preset->setup.header_backup;
-    if (hb[0] | hb[1] | hb[2] | hb[3]) {
-        memcpy((char *)kimg, hb, sizeof(old_preset->setup.header_backup));
-    } else {
-        tools_logw("header_backup reads zeroed (old preset layout?), keeping image header\n");
-    }
+    // header_backup sits immediately after map_symbol, whose entry count (MAP_SYMBOL_NUM)
+    // grew from 5 to 7 in 0.13.2 - shifting header_backup +16 bytes. An already-patched
+    // image still carries the preset that patched it; when that preset predates 0.13.2 its
+    // header_backup is 16 bytes earlier than our current struct places it. Read it at the
+    // OLD preset's own version offset, or we'd copy zero-filled reserve over the kernel
+    // entry: code0 -> 0 (udf at boot) and the original 'b primary_entry' lost (boot loop).
+    version_t ov = old_preset->header.kp_version;
+    uint32_t over = (ov.major << 16) + (ov.minor << 8) + ov.patch;
+    const char *hb = (const char *)&old_preset->setup + setup_header_backup_offset;
+    if (over < 0x000d02) hb -= (7 - 5) * 8; // pre-0.13.2 map_symbol had 5 entries
+    memcpy((char *)kimg, hb, sizeof(old_preset->setup.header_backup));
 
     // extra
     int extra_offset = align_kimg_len + old_preset->setup.kpimg_size;
