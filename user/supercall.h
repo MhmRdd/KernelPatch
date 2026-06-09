@@ -545,20 +545,44 @@ static inline long sc_bootlog(const char *key)
 }
 
 /**
- * @brief Read the kpstore crash tombstone.
+ * @brief Read a kpstore crash tombstone by recency level.
  *
  * @param key : superkey
+ * @param level : 0 = most recent tombstone, 1.. = progressively older persisted ones
  * @param buf : output buffer for the tombstone text
  * @param buf_len : size of buf
- * @param prev : 0 for this boot's live record, 1 for the previous boot's persistent one
- * @return long : bytes written if succeed, 0 if no record, negative value if failed
+ * @return long : bytes written if succeed, 0 if no such record, negative value if failed
  */
-static inline long sc_kpstore_read(const char *key, char *buf, int buf_len, int prev)
+static inline long sc_kpstore_read(const char *key, int level, char *buf, int buf_len)
 {
     if (!key || !key[0]) return -EINVAL;
     if (!buf || buf_len <= 0) return -EINVAL;
-    long ret = syscall(__NR_supercall, key, ver_and_cmd(key, SUPERCALL_KPSTORE_READ), buf, buf_len, prev);
-    return ret;
+    return syscall(__NR_supercall, key, ver_and_cmd(key, SUPERCALL_KPSTORE_READ), buf, buf_len, level);
+}
+
+/**
+ * @brief Number of persisted crash tombstones currently stored.
+ *
+ * @param key : superkey
+ * @return long : count, or negative value if failed
+ */
+static inline long sc_kpstore_count(const char *key)
+{
+    if (!key || !key[0]) return -EINVAL;
+    return syscall(__NR_supercall, key, ver_and_cmd(key, SUPERCALL_KPSTORE_COUNT));
+}
+
+/**
+ * @brief Erase the level-th persisted tombstone, or all of them if level < 0.
+ *
+ * @param key : superkey
+ * @param level : recency level to erase, or negative to erase all
+ * @return long : number of records erased, or negative value if failed
+ */
+static inline long sc_kpstore_erase(const char *key, int level)
+{
+    if (!key || !key[0]) return -EINVAL;
+    return syscall(__NR_supercall, key, ver_and_cmd(key, SUPERCALL_KPSTORE_ERASE), (long)level);
 }
 
 static inline long sc_panic(const char *key)

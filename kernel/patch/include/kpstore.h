@@ -33,7 +33,16 @@ const char *kpstore_record_data(int *len);
 // reserve the persistent (cross-reboot) region, call early at paging_init
 void kpstore_persist_reserve(void);
 
-// return the previous-boot tombstone from the persistent region (null if none)
+// newest persisted record (level 0), decompressed (null if none)
 const char *kpstore_persist_data(int *len);
+
+// k-th newest persisted record (0 = newest), decompressed into a shared buffer
+const char *kpstore_persist_read(int level, int *len);
+
+// number of valid persisted records
+int kpstore_persist_count(void);
+
+// erase the k-th newest record, or all if level < 0, returns count erased
+int kpstore_persist_erase(int level);
 
 #endif

@@ -294,6 +294,12 @@ static int move_module(struct module *mod, struct load_info *info)
 
         shdr->sh_addr = (unsigned long)dest;
 
+        if (i == info->index.sym) {
+            mod->symtab = dest;
+            mod->num_syms = shdr->sh_size / sizeof(Elf_Sym);
+        }
+        if (i == info->index.str) mod->strtab = (char *)dest;
+
         if (!mod->init && !strcmp(".kpm.init", sname)) mod->init = (mod_initcall_t *)dest;
 
         if (!strcmp(".kpm.ctl0", sname)) mod->ctl0 = (mod_ctl0call_t *)dest;
@@ -311,6 +317,39 @@ static int move_module(struct module *mod, struct load_info *info)
     if (info->info.description) mod->info.description = info->info.description - info->info.base + mod->info.base;
 
     return 0;
+}
+
+#ifndef STT_FUNC
+#define STT_FUNC 2
+#endif
+#ifndef ELF_ST_TYPE
+#define ELF_ST_TYPE(x) ((x) & 0xf)
+#endif
+
+// nearest function symbol at or below addr within the module, for backtraces
+const char *module_symbol(struct module *mod, unsigned long addr, unsigned long *offset)
+{
+    if (!mod || !mod->symtab || !mod->strtab || !mod->num_syms) return 0;
+
+    Elf_Sym *syms = (Elf_Sym *)mod->symtab;
+    unsigned long base = (unsigned long)mod->start;
+    unsigned long end = base + mod->size;
+    unsigned int n = mod->num_syms;
+    const char *best = 0;
+    unsigned long best_val = 0;
+
+    if (n > 0x8000) n = 0x8000;
+    for (unsigned int i = 1; i < n; i++) {
+        unsigned long v = syms[i].st_value;
+        if (v < base || v >= end) continue;
+        if (ELF_ST_TYPE(syms[i].st_info) != STT_FUNC) continue;
+        if (v <= addr && v >= best_val) {
+            best_val = v;
+            best = mod->strtab + syms[i].st_name;
+        }
+    }
+    if (best && offset) *offset = addr - best_val;
+    return (best && best[0]) ? best : 0;
 }
 
 static int setup_load_info(struct load_info *info)

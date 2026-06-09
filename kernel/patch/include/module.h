@@ -48,8 +48,15 @@ struct module
 
     void *start;
 
+    void *symtab;
+    char *strtab;
+    unsigned int num_syms;
+
     struct list_head list;
 };
+
+// resolve an address inside a loaded module to its symbol name + offset
+const char *module_symbol(struct module *mod, unsigned long addr, unsigned long *offset);
 
 long load_module(const void *data, int len, const char *args, const char *event, void *__user reserved);
 long load_module_path(const char *path, const char *args, void *__user reserved);

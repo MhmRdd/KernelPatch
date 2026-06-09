@@ -76,11 +76,13 @@ static long call_buildtime(char __user *out_buildtime, int u_len)
     return rc;
 }
 
-// which: 0 = this boot's live tombstone, 1 = the previous boot's persistent one
-static long call_kpstore_read(char __user *out, int u_len, int which)
+// level 0 = most recent tombstone (this boot's if any, else newest persisted),
+// 1.. = progressively older persisted tombstones
+static long call_kpstore_read(char __user *out, int u_len, int level)
 {
     int len = 0;
-    const char *rec = which ? kpstore_persist_data(&len) : kpstore_record_data(&len);
+    const char *rec = kpstore_persist_read(level, &len);
+    if (!rec && level == 0) rec = kpstore_record_data(&len);
     if (!rec || len <= 0) return 0;
     if (u_len <= 0) return -EINVAL;
     if (len > u_len) len = u_len;
@@ -384,6 +386,10 @@ static long supercall(int is_authed, long cmd, long arg1, long arg2, long arg3, 
         return call_kpm_info((const char *__user)arg1, (char *__user)arg2, (int)arg3);
     case SUPERCALL_KPSTORE_READ:
         return call_kpstore_read((char *__user)arg1, (int)arg2, (int)arg3);
+    case SUPERCALL_KPSTORE_COUNT:
+        return kpstore_persist_count();
+    case SUPERCALL_KPSTORE_ERASE:
+        return kpstore_persist_erase((int)arg1);
     }
 
     switch (cmd) {

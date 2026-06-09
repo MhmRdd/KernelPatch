@@ -176,6 +176,10 @@ uint64_t linear_voffset = 0;
 uint64_t kernel_va = 0;
 uint64_t kernel_pa = 0;
 int64_t kernel_size = 0;
+
+// kpstore persistent region, baked by kptools into the preset (0 if unset)
+uint64_t kpstore_reserved_pa = 0;
+uint64_t kpstore_reserved_size = 0;
 int64_t page_shift = 0;
 int64_t page_size = 0;
 int64_t va_bits = 0;
@@ -504,6 +508,9 @@ static int start_init(uint64_t kimage_voff, uint64_t linear_voff)
     kernel_pa = start_preset.kernel_pa;
     kernel_va = kimage_voff + kernel_pa;
     kernel_size = start_preset.kernel_size;
+
+    kpstore_reserved_pa = start_preset.kpstore_pa;
+    kpstore_reserved_size = start_preset.kpstore_size;
     runtime_base_addr = (uint64_t)_link_base;
 
     if (start_preset.patch_config.printk) {
