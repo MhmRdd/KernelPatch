@@ -254,7 +254,18 @@ int parse_image_patch_info(const char *kimg, int kimg_len, patched_kimg_t *pimg)
     tools_logi("patched kernel image ...\n");
     pimg->ori_kimg_len = saved_kimg_len;
 
-    memcpy((char *)kimg, old_preset->setup.header_backup, sizeof(old_preset->setup.header_backup));
+    // The saved header_backup holds the kernel's original first instructions (code0 = the
+    // EFI "MZ" stub, never zero for a bootable arm64 Image). If it reads back all-zero, the
+    // old preset was written with a different layout (e.g. pre-0.13.2 MAP_SYMBOL_NUM 5 vs 7,
+    // which shifts header_backup's offset) and we're looking at zero-filled reserve. Restoring
+    // that would clobber code0 and brick the boot, so keep the image's existing (valid) header.
+    const uint8_t *hb = old_preset->setup.header_backup;
+    if (hb[0] | hb[1] | hb[2] | hb[3]) {
+        memcpy((char *)kimg, hb, sizeof(old_preset->setup.header_backup));
+    } else {
+        tools_logw("header_backup reads zeroed (old preset layout?), keeping image header
+");
+    }
 
     // extra
     int extra_offset = align_kimg_len + old_preset->setup.kpimg_size;
