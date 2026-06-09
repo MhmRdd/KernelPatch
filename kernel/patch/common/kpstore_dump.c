@@ -732,8 +732,20 @@ static int kp_die_cb(struct kp_notifier_block *nb, unsigned long action, void *d
 
 static struct kp_notifier_block kp_die_nb = { kp_die_cb, 0, 0 };
 
-// die notifier covers oopses/faults with regs. The panic path is captured from
-// KP's existing before_panic hook (a function hook, no data-symbol dependency).
+// panic() does not walk the die chain - it walks panic_notifier_list with the panic
+// message as data (no regs). Capture a tombstone there too, otherwise an explicit
+// panic (e.g. SUPERCALL_PANIC) records nothing and survives no reboot.
+static int kp_panic_cb(struct kp_notifier_block *nb, unsigned long action, void *data)
+{
+    (void)nb;
+    (void)action;
+    kpstore_tombstone(data ? (const char *)data : "panic", 0);
+    return 0; // NOTIFY_DONE
+}
+
+static struct kp_notifier_block kp_panic_nb = { kp_panic_cb, 0, 0 };
+
+// die notifier covers oopses/faults (with regs); panic notifier covers panic().
 void kpstore_crash_init(void)
 {
     if (!rec_buf) {
@@ -744,4 +756,10 @@ void kpstore_crash_init(void)
 
     int (*reg_die)(struct kp_notifier_block *) = (typeof(reg_die))kallsyms_lookup_name("register_die_notifier");
     if (reg_die) reg_die(&kp_die_nb);
+
+    // panic_notifier_list is a struct atomic_notifier_head; the symbol address is the head.
+    int (*reg_atomic)(void *, struct kp_notifier_block *) =
+        (typeof(reg_atomic))kallsyms_lookup_name("atomic_notifier_chain_register");
+    void *panic_list = (void *)kallsyms_lookup_name("panic_notifier_list");
+    if (reg_atomic && panic_list) reg_atomic(panic_list, &kp_panic_nb);
 }
