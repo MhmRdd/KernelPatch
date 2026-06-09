@@ -10,6 +10,9 @@ AS = $(TARGET_COMPILE)as
 OBJCOPY = $(TARGET_COMPILE)objcopy
 
 CFLAGS += -Wall -fno-builtin -std=gnu11 -nostdinc -mgeneral-regs-only
+# emit inline LL/SC for __atomic builtins, the engine links -nostdlib so the
+# libgcc outline-atomic helpers (__aarch64_*) are not available
+CFLAGS += -mno-outline-atomics
 CFLAGS += -g
 
 ifdef DEBUG
