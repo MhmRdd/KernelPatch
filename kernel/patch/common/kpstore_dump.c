@@ -689,16 +689,29 @@ void kpstore_persist_reserve(void)
     reserve_t memblock_reserve = (reserve_t)kallsyms_lookup_name("memblock_reserve");
     bound_t memblock_end_of_DRAM = (bound_t)kallsyms_lookup_name("memblock_end_of_DRAM");
     if (!memblock_reserve || !memblock_end_of_DRAM) return;
+    bound_t memblock_start_of_DRAM = (bound_t)kallsyms_lookup_name("memblock_start_of_DRAM");
     region_t is_reserved = (region_t)kallsyms_lookup_name("memblock_is_region_reserved");
+    region_t is_memory = (region_t)kallsyms_lookup_name("memblock_is_region_memory");
 
     uint64_t size = KPSTORE_REGION_SIZE;
     uint64_t align = 0x200000;
     uint64_t end = memblock_end_of_DRAM();
-    if (end > size + align) {
-        uint64_t base = (end - size) & ~(align - 1);
-        if (!(is_reserved && is_reserved(base, size)) && memblock_reserve(base, size) == 0) {
-            persist_pa = base;
-            persist_size = (int)size;
+    uint64_t floor = memblock_start_of_DRAM ? memblock_start_of_DRAM() : 0;
+    // The top of DRAM is not necessarily free general RAM: on modern Qualcomm/Gunyah
+    // SoCs the high banks are secure/hypervisor carveouts, so the old end-of-DRAM slot
+    // landed in reserved memory and nothing got reserved. Walk down from the top in
+    // align steps and take the highest slot that is real RAM (memblock_is_region_memory)
+    // and not already reserved. The memblock layout is stable across boots, so the chosen
+    // physical address is deterministic - which is what lets the next boot find it again.
+    if (end > size + align && end - size > floor) {
+        for (uint64_t base = (end - size) & ~(align - 1); base >= floor && base >= align; base -= align) {
+            if (is_memory && !is_memory(base, size)) continue;
+            if (is_reserved && is_reserved(base, size)) continue;
+            if (memblock_reserve(base, size) == 0) {
+                persist_pa = base;
+                persist_size = (int)size;
+                break;
+            }
         }
     }
 
