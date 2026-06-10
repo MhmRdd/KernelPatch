@@ -171,8 +171,7 @@ int patch()
     unsigned long die_addr = kallsyms_lookup_name("die");
     if (die_addr) {
         hook_err_t drc = hook_wrap12((void *)die_addr, before_die, 0, 0);
-        log_boot("hook die rc: %d
-", drc);
+        log_boot("hook die rc: %d\n", drc);
     }
 
     extra_event_init(EXTRA_EVENT_PAGING_INIT);
