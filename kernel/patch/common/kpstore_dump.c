@@ -547,6 +547,16 @@ static kpstore_slot_hdr_t *find_level(kpstore_region_hdr_t *rh, int k)
 }
 
 // compress the freshly built record into the next ring slot and flush to DRAM
+// __flush_dcache_area (cache.S) loops dc-civac by a CTR_EL0-derived stride and is
+// otherwise unused; a fixed conservative 64-byte stride cannot hang at crash time.
+static void kp_dc_flush(const void *addr, unsigned long len)
+{
+    unsigned long a = (unsigned long)addr & ~63UL;
+    unsigned long end = (unsigned long)addr + len;
+    for (; a < end; a += 64) dccivac(a);
+    asm volatile("dsb sy" ::: "memory");
+}
+
 static void persist_write(void)
 {
     kpstore_region_hdr_t *rh = region_hdr();
@@ -575,19 +585,13 @@ static void persist_write(void)
     int cap = (int)KPSTORE_SLOT_PAYLOAD;
     int orig = rec_pos < 0 ? 0 : rec_pos;
 
-    int comp = kp_lz4_compress(rec_buf, orig, payload, cap, lz4_ws);
-    uint32_t flags;
-    int stored;
-    if (comp > 0) {
-        flags = KPSTORE_F_LZ4;
-        stored = comp;
-        sh->orig_len = (uint32_t)orig;
-    } else {
-        flags = 0;
-        stored = orig > cap ? cap : orig;
-        lib_memcpy(payload, rec_buf, stored);
-        sh->orig_len = (uint32_t)stored;
-    }
+    // Store raw. The hand-rolled kp_lz4_compress mangles a pointer and faults at crash
+    // time, and a fault inside the panic re-loops on KP's abort hook; for a crash store
+    // robustness beats compression ratio. The tombstone fits a slot (truncate if larger).
+    uint32_t flags = 0;
+    int stored = orig > cap ? cap : orig;
+    lib_memcpy(payload, rec_buf, stored);
+    sh->orig_len = (uint32_t)stored;
 
     sh->flags = flags;
     sh->seq = seq + 1;
@@ -599,8 +603,8 @@ static void persist_write(void)
     rh->seq = seq + 1;
     rh->sum = region_hdr_sum(rh);
 
-    __flush_dcache_area(sh, sizeof(*sh) + stored);
-    __flush_dcache_area(rh, sizeof(*rh));
+    kp_dc_flush(sh, sizeof(*sh) + stored);
+    kp_dc_flush(rh, sizeof(*rh));
 }
 
 // decompress the k-th newest persisted record into dec_buf, returns it + len
@@ -662,7 +666,7 @@ int kpstore_persist_erase(int level)
             if (sh->magic == KPSTORE_SLOT_MAGIC && sh->seq) {
                 sh->magic = 0;
                 sh->seq = 0;
-                __flush_dcache_area(sh, sizeof(*sh));
+                kp_dc_flush(sh, sizeof(*sh));
                 n++;
             }
         }
@@ -673,7 +677,7 @@ int kpstore_persist_erase(int level)
     if (!sh) return 0;
     sh->magic = 0;
     sh->seq = 0;
-    __flush_dcache_area(sh, sizeof(*sh));
+    kp_dc_flush(sh, sizeof(*sh));
     return 1;
 }
 
